@@ -55,6 +55,13 @@
 
         #endregion
 
+
+        //GetAllUSers
+        public async Task<List<User>> AllUsers ( )
+        {
+            var result = await userManager.Users.ToListAsync ( );
+            return result.ToList ( );
+        }
         #region Login
 
         public async Task<LoginResponseDTO> Login(LoginRequestDTO loginRequest)

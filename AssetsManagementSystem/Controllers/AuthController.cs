@@ -43,6 +43,13 @@ namespace AssetsManagementSystem.Controllers
 
         #endregion
 
+        [HttpGet ( "AllUsers" )]
+        public async Task<IActionResult> AllUsers ( )
+        {
+            var result = await _accountingService.AllUsers ( );
+            return Ok ( result );
+        }
+
         #region Login
 
         [HttpPost("Login")]
