@@ -2,7 +2,7 @@
 {
     public class GetSupplierRequestDTO
     {
-        public int Id { get; set; }
+        public int CompanyName { get; set; }
         public string Name { get; set; }
         public string email { get; set; }
 
