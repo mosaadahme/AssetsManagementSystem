@@ -2,8 +2,8 @@
 {
     public class GetSupplierRequestDTO
     {
-        public int CompanyName { get; set; }
-        public string Name { get; set; }
+        public int Id { get; set; }
+        public string CompanyName { get; set; }
         public string email { get; set; }
 
         public string PhoneNumber { get; set; }
