@@ -13,7 +13,10 @@
          public DateOnly DepreciationDate { get; set; }
 
         public string Status { get; set; }
+        public string LocationBarcode { get; set; }
         public string LocationName { get; set; }
+        public string UserId { get; set; }
+
         public string AssignedUserName { get; set; }
         public string CategoryName { get; set; }
         public string ManfactureName { get; set; }
