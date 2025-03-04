@@ -232,7 +232,7 @@ namespace AssetsManagementSystem.Services.Assets
                 existingAsset.Status = updateAssetDto.Status.ToString();
                 existingAsset.LocationId = updateAssetDto.LocationId;
                 existingAsset.AssignedUserId = updateAssetDto.AssignedUserId;
-                existingAsset.CategoryId = updateAssetDto.CategoryId;
+                existingAsset.CategoryId =  Convert.ToInt32(updateAssetDto.CategoryId);
                  #endregion
 
 

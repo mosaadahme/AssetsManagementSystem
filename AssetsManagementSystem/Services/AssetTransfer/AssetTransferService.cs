@@ -180,8 +180,8 @@ namespace AssetsManagementSystem.Services.AssetTransfer
 
             if (transferRecord == null) 
                 throw new KeyNotFoundException("Transfer record not found or has been deleted.");
-
-            if (string.Equals(UserId, transferRecord.ToUserId.ToString()))
+            //changed to ! string.Equal()
+            if (!string.Equals(UserId, transferRecord.ToUserId.ToString()))
                 throw new InvalidOperationException("Your are not authorized for perform this operation.");
 
             if (transferRecord.Status != TransferStatus.Pending.ToString()) 

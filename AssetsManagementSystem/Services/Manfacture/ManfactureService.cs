@@ -37,6 +37,13 @@ namespace AssetsManagementSystem.Services.Manfacture
                 throw new InvalidOperationException("This Manfacure Is not Exist ,may be deleted");
             }
             return Mapper.Map<GetManufacturerResponseDTO, Manufacturer>(Manfacure); ;
+        }  
+        
+        public async Task<IList<GetManufacturerResponseDTO>> GetAll( )
+        {
+            var Manfacure = await UnitOfWork.readRepository<Manufacturer>().GetAllAsync(m => m.IsDeleted==false);
+            
+            return Mapper.Map<GetManufacturerResponseDTO, Manufacturer>(Manfacure); ;
         }
 
         public async Task<IList<GetManufacturerResponseDTO>> GetAllByPaginationManfactureBtId(int currentPage = 1, int pageSize = 10)

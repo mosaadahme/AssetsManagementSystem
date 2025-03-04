@@ -20,7 +20,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region GET: api/Supplier/{id}
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetSupplierById(int id)
         {
@@ -50,7 +50,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region GET: api/Supplier
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetAllSuppliers()
         {
@@ -89,7 +89,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region POST: api/Supplier
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> AddSupplier([FromBody] AddSupplierRequestDTO addSupplierRequest)
         {
@@ -120,7 +120,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region PUT: api/Supplier/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> UpdateSupplier(int id, [FromBody] UpdateSupplierRequestDTO updateSupplierRequest)
         {
@@ -162,7 +162,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region DELETE: api/Supplier/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> DeleteSupplier(int id)
         {

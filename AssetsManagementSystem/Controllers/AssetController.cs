@@ -20,11 +20,12 @@ namespace AssetsManagementSystem.Controllers
 
         #region Add Asset
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> AddAsset([FromForm] AddAssetRequestDTO addAssetDto)
         {
             try
+
             {
                 _logger.LogInformation("Adding a new asset with SerialNumber: {SerialNumber}", addAssetDto.SerialNumber);
                 var result = await _assetService.AddAssetAsync(addAssetDto);
@@ -65,7 +66,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region Get Asset by Current User
         [HttpGet()]
-        [Authorize(Roles = "User,Manager,Admin")]
+        //[Authorize(Roles = "User,Manager,Admin")]
         public async Task<IActionResult> GetAssetForCurrentUser()
         {
             try
@@ -298,7 +299,7 @@ namespace AssetsManagementSystem.Controllers
                             {
                                 Name = row.Cell(1).GetString(),
                                 SerialNumber = serialNumber,
-                                CategoryId = int.Parse(categoryId),
+                                CategoryId = categoryId,
                                 dicription = row.Cell(1).GetString(),
                                 ModelNumber = serialNumber,
                                 Status = AssetStatus.Active,

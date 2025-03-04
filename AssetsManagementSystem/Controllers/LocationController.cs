@@ -16,7 +16,7 @@
         #region AddNewLocation
 
         [HttpPost("add")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> AddLocation([FromBody] AddLocationRequestDTO addLocationRequest)
         {
             if (!ModelState.IsValid)
@@ -81,7 +81,7 @@
         #region GetAllLocations
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetAllLocations()
         {
@@ -125,7 +125,7 @@
         #region UpdateLocation
 
         [HttpPut("update/{locationBarcode}")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> UpdateLocation(string locationBarcode, [FromBody] UpdateLocationRequestDTO updateLocationRequest)
         {
@@ -169,7 +169,7 @@
         #region DeleteLocation
 
         [HttpDelete("delete/{locationBarcode}")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> DeleteLocation(string locationBarcode)
         {

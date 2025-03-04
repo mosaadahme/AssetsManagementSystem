@@ -21,7 +21,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region Transfer Location to Location
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> TransferLocationToLocation([FromBody] LocationToLocationTransferDTO dto)
         {
@@ -124,7 +124,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region Reject Transfer
         [HttpPost("{id}/reject")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> RejectTransfer(int id, [FromBody] string rejectionReason)
         {

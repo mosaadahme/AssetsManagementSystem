@@ -64,8 +64,10 @@ namespace AssetsManagementSystem.Services.Suppliers
         #region Retrieve all suppliers
         public async Task<IEnumerable<GetSupplierRequestDTO>> GetAllSuppliersAsync()
         {
-           var Suppliers=await UnitOfWork.readRepository<Supplier>()
-                .GetAllAsync(predicate: s=> (s.IsDeleted == false || s.IsDeleted == null));
+           //var Suppliers=await UnitOfWork.readRepository<Supplier>()
+           //     .GetAllAsync(predicate: s=> (s.IsDeleted == false || s.IsDeleted == null));
+          var Suppliers=await UnitOfWork.readRepository<Supplier>()
+                .GetAllAsync(predicate: s=> (  s.IsDeleted == null));
          
             var getSupplierRequestDTOs = 
                 Mapper.Map<GetSupplierRequestDTO, Supplier>(Suppliers);

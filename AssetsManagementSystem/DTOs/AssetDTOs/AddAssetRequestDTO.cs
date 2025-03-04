@@ -65,7 +65,7 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
 
 
         [Required(ErrorMessage = "Category is required.")]
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; }
 
 
         public int ManufacturerId { get; set; }

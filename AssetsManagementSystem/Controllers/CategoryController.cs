@@ -27,7 +27,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region AddCategory 
         [HttpPost("add")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> AddCategory([FromBody] AddCategoryRequestDTO addCategoryRequest)
         {
@@ -89,7 +89,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region GetAllCategories
         [HttpGet("all")]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+       // [Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetAllCategories()
         {

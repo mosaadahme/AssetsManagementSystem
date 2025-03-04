@@ -21,7 +21,7 @@ namespace AssetsManagementSystem.Controllers
         #region AddNewUser
 
         [HttpPost("AddUser")]
-        [Authorize(Roles ="Manager,Admin")]
+     //   [Authorize(Roles ="Manager,Admin")]
          public async Task<IActionResult> AddUser([FromForm] AddUserRequestDTO registrationRequest)
         {
             if (!ModelState.IsValid)
@@ -43,7 +43,7 @@ namespace AssetsManagementSystem.Controllers
 
         #endregion
 
-        [HttpGet ( "AllUsers" )]
+        [HttpGet ("AllUsers")]
         public async Task<IActionResult> AllUsers ( )
         {
             var result = await _accountingService.AllUsers ( );

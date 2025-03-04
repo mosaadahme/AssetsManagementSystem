@@ -1,4 +1,6 @@
-﻿namespace AssetsManagementSystem.Services.Auth
+﻿using AssetsManagementSystem.DTOs.AccountServiceDTOs.AllUsers;
+
+namespace AssetsManagementSystem.Services.Auth
 {
     public class Accounting : BaseClassForServices
     {
@@ -8,6 +10,7 @@
         private readonly ITokenService tokenService;
         private readonly IConfiguration configuration;
         private readonly ILogger<Accounting> logger;
+
 
         public Accounting(IUnitOfWork unitOfWork,
                           Others.Interfaces.IAutoMapper.IMapper mapper,
@@ -57,9 +60,18 @@
 
 
         //GetAllUSers
-        public async Task<List<User>> AllUsers ( )
+        public async Task<List<AllUsersResponse>> AllUsers ( )
         {
-            var result = await userManager.Users.ToListAsync ( );
+            var users = await userManager.Users.ToListAsync ( );
+            //var result=new List<User>();
+            //var result=await UnitOfWork.readRepository<User>().GetAllAsync();
+            var result = users.Select(u => new AllUsersResponse()
+            {
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                UserStatus = u.UserStatus,
+                UserId=u.Id
+            });
             return result.ToList ( );
         }
         #region Login

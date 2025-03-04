@@ -1,4 +1,5 @@
 ﻿using AssetsManagementSystem.DTOs.ManufacturerDTOs;
+using AssetsManagementSystem.Services.Locations;
 using AssetsManagementSystem.Services.Manfacture;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace AssetsManagementSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> AddManfacture([FromBody] AddManufacturerRequestDTO addManufacturerRequest)
         {
@@ -47,6 +48,29 @@ namespace AssetsManagementSystem.Controllers
             }
         }
 
+        #region GetAllManufactutre
+
+        [HttpGet("all")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
+
+        public async Task<IActionResult> GetAllManufacture()
+        {
+            try
+            {
+                var Manufactures = await _manfactureService.GetAll();
+                _logger.LogInformation("All Manufactures retrieved successfully.");
+                return Ok(Manufactures);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while retrieving all Manufactures.");
+                return StatusCode(500, new { Error = "An error occurred while retrieving the Manufactures", Details = ex.Message });
+            }
+        }
+
+        #endregion
+
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Manager,Auditor")]
         public async Task<IActionResult> GetManfactureById(int id)
@@ -70,7 +94,7 @@ namespace AssetsManagementSystem.Controllers
         }
 
         [HttpPut("update/{id}")]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> UpdateManfacture(int id, [FromBody] UpdateManufacturerRequestDTO updateManufacturerRequest)
         {
