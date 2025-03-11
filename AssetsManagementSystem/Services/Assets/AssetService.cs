@@ -224,6 +224,12 @@ namespace AssetsManagementSystem.Services.Assets
                 // Validate foreign keys and category-subcategory relation
                 await ValidateForeignKeysAndCategoryRelationAsync(updateAssetDto);
 
+
+                var category = await UnitOfWork.readRepository<Category>()
+                    .GetAsync(c => c.SerialCode == updateAssetDto.CategoryId &&
+                    (c.IsDeleted == false || c.IsDeleted == null));
+
+
                 #region Manually assign properties from the DTO to the existing asset
                 existingAsset.Name = updateAssetDto.Name;
                 existingAsset.ModelNumber = updateAssetDto.ModelNumber;
@@ -234,7 +240,7 @@ namespace AssetsManagementSystem.Services.Assets
                 existingAsset.Status = updateAssetDto.Status.ToString();
                 existingAsset.LocationId = updateAssetDto.LocationId;
                 existingAsset.AssignedUserId = updateAssetDto.AssignedUserId;
-                existingAsset.CategoryId =  Convert.ToInt32(updateAssetDto.CategoryId);
+                existingAsset.CategoryId =  Convert.ToInt32(category.Id);
                  #endregion
 
 

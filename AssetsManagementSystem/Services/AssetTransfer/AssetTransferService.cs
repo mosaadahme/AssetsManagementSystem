@@ -151,6 +151,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromLocationId = fromlocation.Id,
                 ToLocationId = Tolocation.Id,
                 Status = TransferStatus.Pending.ToString(),
+                IsUserTransfer=true,
                 AddedOnDate =DateTime.Now
             };
 

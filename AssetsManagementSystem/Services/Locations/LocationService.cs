@@ -23,7 +23,7 @@ namespace AssetsManagementSystem.Services.Locations
             }
 
             var existingLocation = await UnitOfWork.readRepository<Location>()
-                                       .GetAsync(l => l.Name == addLocationRequest.Name || l.Barcode==addLocationRequest.Barcode);
+                                       .GetAsync(l =>  l.Barcode==addLocationRequest.Barcode);//l.Name == addLocationRequest.Name ||
 
             if (existingLocation != null)
             {

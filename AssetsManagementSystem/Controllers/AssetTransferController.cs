@@ -126,9 +126,9 @@ namespace AssetsManagementSystem.Controllers
         [HttpPost("{id}/reject")]
         //[Authorize(Roles = "Admin,Manager")]
 
-        public async Task<IActionResult> RejectTransfer(int id, [FromBody] string rejectionReason)
+        public async Task<IActionResult> RejectTransfer(int id)//, [FromBody] string rejectionReason)
         {
-            if (string.IsNullOrWhiteSpace(rejectionReason))
+            if (string.IsNullOrWhiteSpace("rejectionReason"))
             {
                 _logger.LogWarning("Rejection reason is required.");
                 return BadRequest("Rejection reason is required.");
@@ -136,7 +136,7 @@ namespace AssetsManagementSystem.Controllers
 
             try
             {
-                await _assetTransferService.RejectTransferAsync(id, rejectionReason);
+                await _assetTransferService.RejectTransferAsync(id, "rejectionReason");
                 _logger.LogInformation($"Asset transfer {id} rejected successfully.");
                 return Ok("Transfer rejected successfully.");
             }
