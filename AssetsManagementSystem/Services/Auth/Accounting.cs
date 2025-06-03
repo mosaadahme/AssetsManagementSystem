@@ -70,7 +70,8 @@ namespace AssetsManagementSystem.Services.Auth
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 UserStatus = u.UserStatus,
-                UserId=u.Id
+                UserId=u.Id,
+                Email=u.Email
             });
             return result.ToList ( );
         }
