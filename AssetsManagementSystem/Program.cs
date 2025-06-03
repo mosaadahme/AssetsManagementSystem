@@ -5,7 +5,7 @@ namespace AssetsManagementSystem
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +85,12 @@ namespace AssetsManagementSystem
                     //c.RoutePrefix = string.Empty; // To access Swagger directly from the root
                 });
             }
+            using ( var serviceScope = app.Services.CreateScope ( ) )
+            {
+                var services = serviceScope.ServiceProvider;
+                await DbSeeder.SeedAsync ( services );
+            }
+
 
             app.UseHttpsRedirection();
 
