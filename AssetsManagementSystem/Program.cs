@@ -1,3 +1,5 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
@@ -9,11 +11,17 @@ namespace AssetsManagementSystem
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            
+
             #region Add services to the container
 
-            builder.Services.AddCors();
-
+            builder.Services.AddCors(options =>
+           options.AddDefaultPolicy(builder =>
+           builder
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowAnyOrigin()
+          )
+                           );
             builder.Services.AddDataProtection();
 
             builder.Services.AddOthersServices(builder.Configuration);
@@ -92,7 +100,7 @@ namespace AssetsManagementSystem
 
             app.UseAuthorization();
 
-            app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+            app.UseCors();
  
             app.MapControllers();
 
