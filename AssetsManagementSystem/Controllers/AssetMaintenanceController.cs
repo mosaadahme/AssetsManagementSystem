@@ -20,7 +20,7 @@ namespace AssetsManagementSystem.Controllers
 
 
         [HttpPost("AddMaintenanceRecord")]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> AddMaintenanceRecord([FromBody] AddAssetMaintenanceRecordDTO maintenanceDto)
         {
             try

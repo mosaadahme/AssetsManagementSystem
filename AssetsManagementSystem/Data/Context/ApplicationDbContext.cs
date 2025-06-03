@@ -109,6 +109,7 @@
         public virtual DbSet<Document> Documents { get; set; }
          public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<ReceiveMaintainedAsset> ReceiveMaintainedAsset { get; set; }
+        public virtual DbSet<AuditTrail> AuditTrails { get; set; }
         #endregion
     }
 }

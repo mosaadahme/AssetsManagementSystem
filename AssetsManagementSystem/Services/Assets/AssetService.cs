@@ -5,6 +5,7 @@ namespace AssetsManagementSystem.Services.Assets
 {
     public class AssetService : BaseClassForServices
     {
+
         public AssetService(IUnitOfWork unitOfWork, Others.Interfaces.IAutoMapper.IMapper mapper, IHttpContextAccessor httpContextAccessor)
             : base(unitOfWork, mapper, httpContextAccessor)
         {
@@ -43,6 +44,19 @@ namespace AssetsManagementSystem.Services.Assets
                 UpdatedDate = a.UpdatedDate
             }).ToList();
 
+
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Fetch",
+                EntityType = "Asset",
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+           await UnitOfWork.SaveChangeAsync();
+
             return getAssetResponseDTO;
 
         }
@@ -77,13 +91,25 @@ namespace AssetsManagementSystem.Services.Assets
                 // Add related records in AssetsSuppliers table
                 await AddOrUpdateAssetSuppliers(asset.Id, addAssetDto.SupplierIds);
 
-                await UnitOfWork.CommitTransactionAsync();
-            }
+             }
             catch
             {
                 await UnitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Added",
+                EntityType = "Asset",
+                EntityName =asset.SerialNumber,
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+            await UnitOfWork.SaveChangeAsync();
+            await UnitOfWork.CommitTransactionAsync();
 
             return await GetAssetByIdAsync(asset.SerialNumber);
         }
@@ -122,6 +148,19 @@ namespace AssetsManagementSystem.Services.Assets
                 AddedOnDate = asset.AddedOnDate,
                 UpdatedDate = asset.UpdatedDate
             };
+
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Fetch",
+                EntityType = "Asset",
+                EntityName = asset.SerialNumber,
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+            await UnitOfWork.SaveChangeAsync();
 
             return getAssetResponseDTO;
 
@@ -189,7 +228,18 @@ namespace AssetsManagementSystem.Services.Assets
                 AddedOnDate = a.AddedOnDate,
                 UpdatedDate = a.UpdatedDate
             }).ToList();
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Added",
+                EntityType = "Asset",
+                EntityName = "All Assets",
+                UserId = UserId ?? "System"
+            };
 
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+            await UnitOfWork.SaveChangeAsync();
             return getAssetResponseDTO;
         }
         #endregion
@@ -253,7 +303,20 @@ namespace AssetsManagementSystem.Services.Assets
                 await DeleteAssetSuppliers(existingAsset.Id);
                 await AddOrUpdateAssetSuppliers(existingAsset.Id, updateAssetDto.SupplierIds);
 
-                await UnitOfWork.CommitTransactionAsync();
+ 
+
+                var auditTrail = new AuditTrail()
+                {
+                    AddedOn = DateTime.Now,
+                    Action = "Update",
+                    EntityType = "Asset",
+                    EntityName = existingAsset.SerialNumber,
+                    UserId = UserId ?? "System"
+                };
+
+                await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+                await UnitOfWork.SaveChangeAsync();
 
                 return await GetAssetByIdAsync(existingAsset.SerialNumber);
             }
@@ -286,7 +349,19 @@ namespace AssetsManagementSystem.Services.Assets
                 await UnitOfWork.writeRepository<Asset>().UpdateAsync(existingAsset.Id, existingAsset);
                await DeleteAssetSuppliers (existingAsset.Id);
                 await UnitOfWork.SaveChangeAsync();
-                await UnitOfWork.CommitTransactionAsync();
+ 
+                var auditTrail = new AuditTrail()
+                {
+                    AddedOn = DateTime.Now,
+                    Action = "Added",
+                    EntityType = "Asset",
+                    EntityName = existingAsset.SerialNumber,
+                    UserId = UserId ?? "System"
+                };
+
+                await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+                await UnitOfWork.SaveChangeAsync();
             }
             catch
             {

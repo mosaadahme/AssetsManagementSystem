@@ -30,6 +30,8 @@ namespace AssetsManagementSystem.Services
 
             services.AddScoped<ReceiveMaintainedAssetService>();
 
+            services.AddScoped<AuditTrailService>();
+
             services.AddScoped<DataConsistencyCheckService>();
         }
     }

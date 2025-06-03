@@ -1,6 +1,7 @@
 ﻿
 using AssetsManagementSystem.DTOs.LocationDTOs;
 using AssetsManagementSystem.Models.DbSets;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace AssetsManagementSystem.Services.Locations
 {
@@ -22,7 +23,7 @@ namespace AssetsManagementSystem.Services.Locations
                 throw new ArgumentNullException(nameof(addLocationRequest), "Location details cannot be null.");
             }
 
-            var existingLocation = await UnitOfWork.readRepository<Location>()
+            var existingLocation = await UnitOfWork.readRepository<Models.DbSets.Location>()
                                        .GetAsync(l =>  l.Barcode==addLocationRequest.Barcode);//l.Name == addLocationRequest.Name ||
 
             if (existingLocation != null)
@@ -30,11 +31,24 @@ namespace AssetsManagementSystem.Services.Locations
                 throw new InvalidOperationException("A location with the same name already exists.");
             }
 
-            var location = Mapper.Map<Location,AddLocationRequestDTO>(addLocationRequest);
+            var location = Mapper.Map<Models.DbSets.Location,AddLocationRequestDTO>(addLocationRequest);
 
             location.AddedOnDate = DateTime.Now;
 
-            await UnitOfWork.writeRepository<Location>().AddAsync(location);
+            await UnitOfWork.writeRepository<Models.DbSets.Location>().AddAsync(location);
+
+            await UnitOfWork.SaveChangeAsync();
+
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Added",
+                EntityType = "Location",
+                EntityName = location.Barcode.ToString(),
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
 
             await UnitOfWork.SaveChangeAsync();
         }
@@ -48,15 +62,26 @@ namespace AssetsManagementSystem.Services.Locations
                 throw new ArgumentException("Invalid location Barcode.");
             }
 
-            var location = await UnitOfWork.readRepository<Location>()
+            var location = await UnitOfWork.readRepository<Models.DbSets.Location>()
                 .GetAsync(l => l.Barcode == locationBarcode && (l.IsDeleted == false || l.IsDeleted == null));
-            var getLocationRequestDTO = Mapper.Map<GetLocationRequestDTO,Location>(location);
+            var getLocationRequestDTO = Mapper.Map<GetLocationRequestDTO,Models.DbSets.Location>(location);
 
             if (location == null)
             {
                 throw new KeyNotFoundException("Location not found.");
             }
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Fetch",
+                EntityType = "Location",
+                EntityName = location.Barcode.ToString(),
+                UserId = UserId ?? "System"
+            };
 
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+            await UnitOfWork.SaveChangeAsync();
             return getLocationRequestDTO;
         }
         #endregion
@@ -64,10 +89,24 @@ namespace AssetsManagementSystem.Services.Locations
         #region Retrieve all locations
         public async Task<IEnumerable<GetLocationRequestDTO>> GetAllLocationsAsync()
         {
-            var Locations = await UnitOfWork.readRepository<Location>()
+            var Locations = await UnitOfWork.readRepository<Models.DbSets.Location>()
                .GetAllAsync(predicate: l=> (l.IsDeleted == false || l.IsDeleted == null));
 
-            var GetLocationRequestDTOs = Mapper.Map<GetLocationRequestDTO,Location>(Locations);
+            var GetLocationRequestDTOs = Mapper.Map<GetLocationRequestDTO,Models.DbSets.Location>(Locations);
+
+
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Fetch",
+                EntityType = "Location",
+                EntityName = "All",
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
+
+            await UnitOfWork.SaveChangeAsync();
 
             return GetLocationRequestDTOs;
         }
@@ -77,10 +116,10 @@ namespace AssetsManagementSystem.Services.Locations
         #region Retrieve all locations
         public async Task<IEnumerable<GetLocationRequestDTO>> GetAllByPaginationLocationsAsync(int currentPage = 1, int pageSize = 10)
         {
-            var Locations = await UnitOfWork.readRepository<Location>()
+            var Locations = await UnitOfWork.readRepository<Models.DbSets.Location>()
                .GetAllByPagningAsync(predicate: l => (l.IsDeleted == false || l.IsDeleted == null), pageSize: pageSize, currentPage: currentPage);
 
-            var GetLocationRequestDTOs = Mapper.Map<GetLocationRequestDTO, Location>(Locations);
+            var GetLocationRequestDTOs = Mapper.Map<GetLocationRequestDTO, Models.DbSets.Location>(Locations);
 
             return GetLocationRequestDTOs;
         }
@@ -97,9 +136,9 @@ namespace AssetsManagementSystem.Services.Locations
             }
             var updateLocation = await GetLocationByIdAsync(locationBarcode);
 
-            var location = Mapper.Map<Location,GetLocationRequestDTO>(updateLocation);
+            var location = Mapper.Map<Models.DbSets.Location, GetLocationRequestDTO>(updateLocation);
 
-            var existingLocation = await UnitOfWork.readRepository<Location>()
+            var existingLocation = await UnitOfWork.readRepository<Models.DbSets.Location>()
                                       .GetAsync(l => l.Name == updateLocationRequest.Name && l.Barcode != locationBarcode 
                                       && (l.IsDeleted == false || l.IsDeleted == null));
 
@@ -112,7 +151,20 @@ namespace AssetsManagementSystem.Services.Locations
             location.Address = updateLocationRequest.Address;
             location.UpdatedDate= DateTime.Now;
             location.AddedOnDate = location.AddedOnDate;
-            await UnitOfWork.writeRepository<Location>().UpdateAsync(location.Id, location);
+            await UnitOfWork.writeRepository<Models.DbSets.Location>().UpdateAsync(location.Id, location);
+
+            await UnitOfWork.SaveChangeAsync();
+
+            var auditTrail = new AuditTrail()
+            {
+                AddedOn = DateTime.Now,
+                Action = "Update",
+                EntityType = "Location",
+                EntityName = location.Barcode.ToString(),
+                UserId = UserId ?? "System"
+            };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
 
             await UnitOfWork.SaveChangeAsync();
         }
@@ -129,12 +181,25 @@ namespace AssetsManagementSystem.Services.Locations
             if (asset is not null)
                 throw new InvalidOperationException("There are suppliers dependent on this supplier,Please Go and delete it first");
            
-            var location = Mapper.Map<Location, GetLocationRequestDTO>(updateLocation);
+            var location = Mapper.Map<Models.DbSets.Location, GetLocationRequestDTO>(updateLocation);
 
             location.DeletedDate = DateTime.Now;
             location.IsDeleted = true;
             
-            await UnitOfWork.writeRepository<Location>().UpdateAsync(location.Id, location);
+            await UnitOfWork.writeRepository<Models.DbSets.Location>().UpdateAsync(location.Id, location);
+
+            await UnitOfWork.SaveChangeAsync();
+
+            var auditTrail = new AuditTrail()
+               {
+                   AddedOn = DateTime.Now,
+                   Action = "Delete",
+                   EntityType = "Location",
+                   EntityName = location.Barcode,
+                   UserId = UserId ?? "System"
+               };
+
+            await UnitOfWork.writeRepository<AuditTrail>().AddAsync(auditTrail);
 
             await UnitOfWork.SaveChangeAsync();
         }
