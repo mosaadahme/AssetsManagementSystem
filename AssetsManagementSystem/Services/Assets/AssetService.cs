@@ -87,7 +87,7 @@ namespace AssetsManagementSystem.Services.Assets
                    .GetAsync ( c => c.SerialCode == addAssetDto.CategoryId.ToString ( ) );
 
              
-            var asset = Mapper.Map<Asset, AddAssetRequestDTO> ( addAssetDto , nameof(addAssetDto.CategoryId));
+            var asset = Mapper.Map<Asset, AddAssetRequestDTO> ( addAssetDto );
             asset.AddedOnDate = DateTime.Now;
             asset.Quantity = addAssetDto.Quantity;
             asset.MinQuantityLimit = addAssetDto.MinQuantityLimit;
@@ -581,7 +581,7 @@ namespace AssetsManagementSystem.Services.Assets
                 throw new KeyNotFoundException("Assigned user not found.");
             }
 
-            if (await UnitOfWork.readRepository<Category>().GetAsync(c => c.SerialCode == assetDto.ToString()
+            if (await UnitOfWork.readRepository<Category>().GetAsync(c => c.SerialCode == assetDto.CategoryId.ToString()
             && (c.IsDeleted == false || c.IsDeleted == null)) == null)
             {
                 throw new KeyNotFoundException("Category not found.");

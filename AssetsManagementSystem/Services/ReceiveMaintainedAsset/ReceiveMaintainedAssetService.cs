@@ -67,19 +67,23 @@ namespace AssetsManagementSystem.Services.ReceiveMaintainedAsset
             #endregion
 
 
-            var UploadedDoc = await documentService.AddDocumentAsync(new DTOs.DocumentDTOs.AddDocumentRequestDTO()
+            if ( addReceiveMaintainedAsset.ReceiveMaintainedAssetDoc != null )
             {
-                Title = addReceiveMaintainedAsset.Title,
-                AssetId = asset.Id,
-                PdfFile = addReceiveMaintainedAsset.ReceiveMaintainedAssetDoc
-            });
+                var UploadedDoc = await documentService.AddDocumentAsync ( new DTOs.DocumentDTOs.AddDocumentRequestDTO ( )
+                {
+                    Title = addReceiveMaintainedAsset.Title,
+                    AssetId = asset.Id,
+                    PdfFile = addReceiveMaintainedAsset.ReceiveMaintainedAssetDoc
+                } );
+            }
+            
 
             #region Mapping
             var receiveMaintainedAsset = new Models.DbSets.ReceiveMaintainedAsset()
             {
                 AssetId = asset.Id,
                 DateOfRecieve = DateOnly.FromDateTime(DateTime.Now),
-                DocumentId = UploadedDoc.Id,
+                DocumentId = null,
                 NewUserAssignedId = addReceiveMaintainedAsset.NewUserAssignedId,
                 NewLocationAssigned = addReceiveMaintainedAsset.NewLocationAssignedId,
                 UserRecieveDevFromSupplierId = addReceiveMaintainedAsset.UserRecieveDevFromSupplierId,

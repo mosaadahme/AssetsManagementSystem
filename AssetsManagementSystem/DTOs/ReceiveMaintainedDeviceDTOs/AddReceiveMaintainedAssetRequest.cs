@@ -10,6 +10,6 @@
   
         public int NewLocationAssignedId { get; set; }
 
-        public IFormFile ReceiveMaintainedAssetDoc { get; set; }
+        public IFormFile? ReceiveMaintainedAssetDoc { get; set; }
     }
 }
