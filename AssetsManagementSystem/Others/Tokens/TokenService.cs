@@ -24,6 +24,8 @@ namespace AssetsManagementSystem.Others.Tokens
             IList<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes. NameIdentifier,user.Id.ToString()),
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
+                new Claim("userId",user.Id.ToString()),
                 new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
                 new Claim (System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email,user.Email)
             };
