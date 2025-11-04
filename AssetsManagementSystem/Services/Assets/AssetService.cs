@@ -150,7 +150,9 @@ namespace AssetsManagementSystem.Services.Assets
                  SupplierNames = asset.AssetsSuppliers.Select(s => s.Supplier.CompanyName).ToList(),
                 ManfactureName = asset.Manufacturer.Name,
                 AddedOnDate = asset.AddedOnDate,
-                UpdatedDate = asset.UpdatedDate
+                UpdatedDate = asset.UpdatedDate,
+                Quantity=asset.Quantity,
+                MinQuantityLimit=asset.MinQuantityLimit
             };
 
             var auditTrail = new AuditTrail()
@@ -198,8 +200,10 @@ namespace AssetsManagementSystem.Services.Assets
                  SupplierNames = a.AssetsSuppliers.Select(s => s.Supplier.CompanyName).ToList(),
                 ManfactureName = a.Manufacturer.Name,
                 AddedOnDate = a.AddedOnDate,
-                UpdatedDate = a.UpdatedDate
-            }).ToList();
+                UpdatedDate = a.UpdatedDate,
+                MinQuantityLimit=a.MinQuantityLimit,
+                Quantity=a.Quantity
+            } ).ToList();
 
             return getAssetResponseDTO;
         }
@@ -230,8 +234,11 @@ namespace AssetsManagementSystem.Services.Assets
                 CategoryName = a.Category?.Name,
                  SupplierNames = a.AssetsSuppliers.Select(s => s.Supplier.CompanyName).ToList(),
                 AddedOnDate = a.AddedOnDate,
-                UpdatedDate = a.UpdatedDate
-            }).ToList();
+                UpdatedDate = a.UpdatedDate,
+                MinQuantityLimit = a.MinQuantityLimit,
+                Quantity = a.Quantity
+
+            } ).ToList();
             var auditTrail = new AuditTrail()
             {
                 AddedOn = DateTime.Now,
