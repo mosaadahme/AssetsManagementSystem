@@ -7,10 +7,15 @@ namespace AssetsManagementSystem.Services.Assets
  
     public class AssetService : BaseClassForServices
     {
-
-        public AssetService(IUnitOfWork unitOfWork, Others.Interfaces.IAutoMapper.IMapper mapper, IHttpContextAccessor httpContextAccessor)
-            : base(unitOfWork, mapper, httpContextAccessor)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<AssetService> _logger;
+        private readonly UserManager<User> _userManager;
+        public AssetService ( IUnitOfWork unitOfWork, Others.Interfaces.IAutoMapper.IMapper mapper, IHttpContextAccessor httpContextAccessor, IHttpClientFactory httpClientFactory, ILogger<AssetService> logger, UserManager<User> userManager )
+            : base ( unitOfWork, mapper, httpContextAccessor )
         {
+            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _userManager = userManager;
         }
 
 
@@ -78,15 +83,21 @@ namespace AssetsManagementSystem.Services.Assets
             // Validate foreign keys and category-subcategory relation
             await ValidateForeignKeysAndCategoryRelationAsync(addAssetDto);
 
-            var asset = Mapper.Map<Asset, AddAssetRequestDTO>(addAssetDto);
+            var realcategoryid = await UnitOfWork.readRepository<Category> ( )
+                   .GetAsync ( c => c.SerialCode == addAssetDto.CategoryId.ToString ( ) );
+
+             
+            var asset = Mapper.Map<Asset, AddAssetRequestDTO> ( addAssetDto , nameof(addAssetDto.CategoryId));
             asset.AddedOnDate = DateTime.Now;
             asset.Quantity = addAssetDto.Quantity;
             asset.MinQuantityLimit = addAssetDto.MinQuantityLimit;
+            asset.CategoryId=realcategoryid.Id;
 
             await UnitOfWork.BeginTransactionAsync();
             try
-            { var realcategoryid = await UnitOfWork.readRepository<Category>()
-                    .GetAsync(c => c.SerialCode == addAssetDto.CategoryId.ToString());
+            { 
+                //realcategoryid = await UnitOfWork.readRepository<Category>()
+                //    .GetAsync(c => c.SerialCode == addAssetDto.CategoryId.ToString());
                 asset.CategoryId =realcategoryid.Id;
                 await UnitOfWork.writeRepository<Asset>().AddAsync(asset);
            
@@ -389,8 +400,82 @@ namespace AssetsManagementSystem.Services.Assets
 
             if ( isLowStock )
             {
-                // notification Call here 
+                
+                _logger.LogWarning ( "LOW STOCK: Asset '{AssetName}' (ID: {AssetId}) reached {Quantity} units.",
+                    asset.Name, asset.Id, asset.Quantity );
 
+                try
+                {
+                     
+                    _logger.LogInformation ( "Fetching admin users for low stock notification..." );
+
+                    
+                    var adminsInRole = await _userManager.GetUsersInRoleAsync ( "Admin" );
+
+                     
+                    var userIdsToNotify = adminsInRole
+                        .Where ( u => u.IsDeleted == false || u.IsDeleted == null )  
+                        .Select ( u => u.Id.ToString ( ) ) 
+                        .ToList ( );
+
+                    if ( userIdsToNotify.Any ( ) == false )
+                    {
+                        _logger.LogWarning ( "No active admin users found to notify for low stock." );
+                    }
+                    else
+                    {
+                        _logger.LogInformation ( "Found {AdminCount} active admin(s) to notify.", userIdsToNotify.Count );
+
+                         
+                        var httpClient = _httpClientFactory.CreateClient ( );
+
+                         
+                        var metadataObject = new
+                        {
+                            assetId = asset.Id,
+                            assetName = asset.Name,
+                            serialNumber = asset.SerialNumber,
+                            currentQuantity = asset.Quantity,
+                            minLimit = asset.MinQuantityLimit
+                        };
+
+                         
+                        var requestPayload = new
+                        {
+                            userIds = userIdsToNotify, 
+                            title = $"🚨 Low Stock: {asset.Name}",
+                            message = $"Stock for '{asset.Name}' (SN: {asset.SerialNumber}) is low. " +
+                                      $"Current: {asset.Quantity}, Limit: {asset.MinQuantityLimit}.",
+                            notificationType = "Warning",
+                            category = "Inventory",
+                            priority = 3,
+                            actionUrl = $"/assets/manage/{asset.Id}",
+                            metadata = System.Text.Json.JsonSerializer.Serialize ( metadataObject )
+                        };
+
+                        
+                        var response = await httpClient.PostAsJsonAsync (
+                            "http://10.10.10.48:7000/api/trailing/notifications/bulk",
+                            requestPayload
+                        );
+
+                        if ( response.IsSuccessStatusCode )
+                        {
+                            var responseString = await response.Content.ReadAsStringAsync ( );
+                            _logger.LogInformation ( "Low stock notification sent successfully to admins. Response: {Response}", responseString );
+                        }
+                        else
+                        {
+                            _logger.LogError ( "Failed to send low stock notification to admins. Status: {StatusCode}, Reason: {Reason}",
+                                response.StatusCode, response.ReasonPhrase );
+                        }
+                    }
+                }
+                catch ( Exception ex )
+                {
+                    _logger.LogError ( ex, "An error occurred while sending low stock notification for Asset ID {AssetId}.", asset.Id );
+                }
+                
             }
 
             // Return response
@@ -496,7 +581,7 @@ namespace AssetsManagementSystem.Services.Assets
                 throw new KeyNotFoundException("Assigned user not found.");
             }
 
-            if (await UnitOfWork.readRepository<Category>().GetAsync(c => c.SerialCode == assetDto.CategoryId.ToString()
+            if (await UnitOfWork.readRepository<Category>().GetAsync(c => c.SerialCode == assetDto.ToString()
             && (c.IsDeleted == false || c.IsDeleted == null)) == null)
             {
                 throw new KeyNotFoundException("Category not found.");

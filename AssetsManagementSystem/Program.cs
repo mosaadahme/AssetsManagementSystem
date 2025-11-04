@@ -44,8 +44,10 @@ namespace AssetsManagementSystem
             builder.Services.AddControllers()
                .AddJsonOptions(config =>
                    config.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+            builder.Services.AddHttpClient ( );
             #endregion
-             
+
             #region Swagger Configuration
 
             builder.Services.AddSwaggerGen(c =>
