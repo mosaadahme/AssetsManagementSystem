@@ -70,7 +70,17 @@
         public virtual ICollection<AssetMaintenanceRecords> AssetMaintenanceRecords { set; get; }
         public virtual ICollection<AssetTransferRecords>  AssetTransferRecords { set; get; }
 
-        
+
+        [Required ( ErrorMessage = "Quantity is required." )]
+        [Range ( 0, int.MaxValue, ErrorMessage = "Quantity must be a non-negative value." )]
+        public int Quantity { get; set; } // استخدام int للكميات
+
+       
+        [Required ( ErrorMessage = "Minimum quantity limit is required." )]
+        [Range ( 0, int.MaxValue, ErrorMessage = "Minimum quantity limit must be a non-negative value." )]
+        public int? MinQuantityLimit { get; set; }
+
+
 
     }
 }

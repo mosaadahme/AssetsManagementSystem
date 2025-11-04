@@ -1,3 +1,4 @@
+using AssetsManagementSystem.Services.Report;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -38,6 +39,7 @@ namespace AssetsManagementSystem
 
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddScoped<ReportService> ( );
 
             builder.Services.AddControllers()
                .AddJsonOptions(config =>

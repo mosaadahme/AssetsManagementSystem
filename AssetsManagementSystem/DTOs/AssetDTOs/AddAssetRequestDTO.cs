@@ -72,5 +72,13 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
 
         public ICollection<int> SupplierIds { get; set; }
 
+
+        [Required ( ErrorMessage = "Quantity is required." )]
+        [Range ( 1, int.MaxValue, ErrorMessage = "Quantity must be a positive value." )]  
+        public int Quantity { get; set; }
+         
+        [Required ( ErrorMessage = "Minimum quantity limit is required." )]
+        [Range ( 0, int.MaxValue, ErrorMessage = "Minimum quantity limit must be a non-negative value." )]
+        public int? MinQuantityLimit { get; set; }
     }
 }

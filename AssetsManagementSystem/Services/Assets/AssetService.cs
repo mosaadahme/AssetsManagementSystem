@@ -78,6 +78,8 @@ namespace AssetsManagementSystem.Services.Assets
 
             var asset = Mapper.Map<Asset, AddAssetRequestDTO>(addAssetDto);
             asset.AddedOnDate = DateTime.Now;
+            asset.Quantity = addAssetDto.Quantity;
+            asset.MinQuantityLimit = addAssetDto.MinQuantityLimit;
 
             await UnitOfWork.BeginTransactionAsync();
             try
