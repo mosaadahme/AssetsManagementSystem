@@ -155,8 +155,42 @@ namespace AssetsManagementSystem.Controllers
         }
         #endregion
 
+        #region withdraw asset 
+
+        [HttpPost]
+        public async Task<IActionResult> withdrawAsset ( int Id, int quantity )
+        {
+            try
+            {
+                _logger.LogInformation ( "Updating asset with ID: {AssetId}", Id );
+                var result = await _assetService.WithdrawQuantityAsync ( Id, quantity );
+                return Ok ( result );
+            }
+            catch ( KeyNotFoundException ex )
+            {
+                _logger.LogWarning ( ex, "Asset with ID: {AssetId} not found", Id );
+                return NotFound ( new { error = ex.Message } );
+            }
+            catch ( InvalidOperationException ex )
+            {
+                _logger.LogWarning ( ex, "Invalid operation while updating asset with ID: {AssetId}", Id );
+                return BadRequest ( new { error = ex.Message } );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "An error occurred while updating the asset with ID: {AssetId}", Id );
+                return BadRequest ( new { error = ex.Message } );
+            }
+        }
+
+
+        #endregion
+
+
+
+
         #region Delete Asset
-        [HttpDelete("{serialNumber}")]
+        [HttpDelete ("{serialNumber}")]
         [Authorize(Roles = "Admin,Manager")]
 
         public async Task<IActionResult> DeleteAsset(string serialNumber)

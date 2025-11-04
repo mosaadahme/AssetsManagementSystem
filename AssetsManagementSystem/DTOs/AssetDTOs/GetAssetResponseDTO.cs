@@ -24,5 +24,11 @@
         public ICollection<string> SupplierNames { get; set; }
         public DateTime AddedOnDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
+
+
+        public int? MinQuantityLimit { get; set; }
+
+
+        public int Quantity { get; set; }
     }
 }

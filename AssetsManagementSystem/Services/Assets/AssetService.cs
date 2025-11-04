@@ -3,6 +3,8 @@ using AssetsManagementSystem.Models.DbSets;
 
 namespace AssetsManagementSystem.Services.Assets
 {
+
+ 
     public class AssetService : BaseClassForServices
     {
 
@@ -329,6 +331,75 @@ namespace AssetsManagementSystem.Services.Assets
             }
         }
         #endregion
+
+
+        
+
+        #region Withdraw Quantity from Asset
+     
+        public async Task<DTOs.AssetDTOs.GetAssetResponseDTO> WithdrawQuantityAsync ( int assetId, int quantityToWithdraw )
+        {
+            // Validation
+            if ( assetId <= 0 )
+            {
+                throw new ArgumentException ( "Invalid asset ID.", nameof ( assetId ) );
+            }
+
+            if ( quantityToWithdraw <= 0 )
+            {
+                throw new ArgumentException ( "Quantity to withdraw must be greater than zero.", nameof ( quantityToWithdraw ) );
+            }
+
+            // Get the asset
+            var asset = await UnitOfWork.readRepository<Asset> ( )
+                .GetAsync ( predicate: a => a.Id == assetId && ( a.IsDeleted == false || a.IsDeleted == null ) );
+
+            if ( asset == null )
+            {
+                throw new KeyNotFoundException ( $"Asset with ID {assetId} not found." );
+            }
+
+            // Check if withdrawal would result in negative quantity
+            int remainingQuantity = asset.Quantity - quantityToWithdraw;
+
+            if ( remainingQuantity < 0 )
+            {
+                throw new InvalidOperationException (
+                    $"Cannot withdraw {quantityToWithdraw} units. Available quantity is {asset.Quantity}."
+                );
+            }
+
+            // Update the quantity
+            asset.Quantity = remainingQuantity;
+            asset.UpdatedDate = DateTime.Now;
+
+            // Save changes
+            await UnitOfWork.writeRepository<Asset> ( ).UpdateAsync ( asset.Id, asset );
+            await UnitOfWork.SaveChangeAsync ( );
+
+            // Check if stock is low
+            bool isLowStock = asset.Quantity <= asset.MinQuantityLimit;
+
+            if ( isLowStock )
+            {
+                // notification Call here 
+
+            }
+
+            // Return response
+            return new DTOs.AssetDTOs.GetAssetResponseDTO
+            {
+                Id = asset.Id,
+                Name = asset.Name,
+                SerialNumber = asset.SerialNumber,
+                Quantity = asset.Quantity,
+                MinQuantityLimit = asset.MinQuantityLimit,
+             };
+        }
+        #endregion
+
+
+
 
         #region Delete Asset  
         public async Task DeleteAssetAsync(string serialNumber)
