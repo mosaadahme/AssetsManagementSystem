@@ -51,39 +51,92 @@ namespace AssetsManagementSystem.Services.Locations
         }
         #endregion
 
-        #region Retrieve a location by Barcode (Removed Audit)
-        public async Task<GetLocationRequestDTO> GetLocationByBarcodeAsync ( string barcode )
+        #region Retrieve a location by Barcode (Manual Mapping)
+        public async Task<GetLocationRequestDTO> GetLocationByBarcodeAsync ( string locationBarcode )
         {
-            if ( string.IsNullOrEmpty ( barcode ) ) throw new ArgumentException ( "Invalid location Barcode." );
+            if ( string.IsNullOrEmpty ( locationBarcode ) ) throw new ArgumentException ( "Invalid location Barcode." );
 
             var location = await UnitOfWork.readRepository<Location> ( )
-                .GetAsync ( l => l.Barcode == barcode && ( l.IsDeleted == false || l.IsDeleted == null ) );
+                .GetAsync ( l => l.Barcode == locationBarcode && ( l.IsDeleted == false || l.IsDeleted == null ) );
 
             if ( location == null ) throw new KeyNotFoundException ( "Location not found." );
 
-            return Mapper.Map<GetLocationRequestDTO> ( location );
+            // --- التحويل اليدوي ---
+            return new GetLocationRequestDTO
+            {
+                Id = location.Id,
+                Barcode = location.Barcode,
+                Name = location.Name,
+                Address = location.Address,
+                AddedOnDate = location.AddedOnDate,
+                UpdatedDate = location.UpdatedDate
+            };
         }
         #endregion
 
-        #region Retrieve all locations (Removed Audit)
+        #region Retrieve all locations (Manual Mapping)
         public async Task<IEnumerable<GetLocationRequestDTO>> GetAllLocationsAsync ( )
         {
             var locations = await UnitOfWork.readRepository<Location> ( )
-                .GetAllAsync ( predicate: l => ( l.IsDeleted == false || l.IsDeleted == null ) );
+               .GetAllAsync ( predicate: l => ( l.IsDeleted == false || l.IsDeleted == null ) );
 
-            return Mapper.Map<IEnumerable<GetLocationRequestDTO>> ( locations );
+            // --- التحويل اليدوي باستخدام Select ---
+            // ده بيحل مشكلة الـ IEnumerable error فوراً
+            var dtos = locations.Select ( l => new GetLocationRequestDTO
+            {
+                Id = l.Id,
+                Barcode = l.Barcode,
+                Name = l.Name,
+                Address = l.Address,
+                AddedOnDate = l.AddedOnDate,
+                UpdatedDate = l.UpdatedDate
+            } ).ToList ( );
+
+            return dtos;
         }
         #endregion
 
-        #region Retrieve all locations Pagination
+        #region Retrieve all locations Pagination (Manual Mapping)
         public async Task<IEnumerable<GetLocationRequestDTO>> GetAllByPaginationLocationsAsync ( int currentPage = 1, int pageSize = 10 )
         {
             var locations = await UnitOfWork.readRepository<Location> ( )
                 .GetAllByPagningAsync ( predicate: l => ( l.IsDeleted == false || l.IsDeleted == null ), pageSize: pageSize, currentPage: currentPage );
 
-            return Mapper.Map<IEnumerable<GetLocationRequestDTO>> ( locations );
+            // --- التحويل اليدوي ---
+            var dtos = locations.Select ( l => new GetLocationRequestDTO
+            {
+                Id = l.Id,
+                Barcode = l.Barcode,
+                Name = l.Name,
+                Address = l.Address,
+                AddedOnDate = l.AddedOnDate,
+                UpdatedDate = l.UpdatedDate
+            } ).ToList ( );
+
+            return dtos;
         }
         #endregion
+
+
+        //#region Retrieve all locations (Removed Audit)
+        //public async Task<IEnumerable<GetLocationRequestDTO>> GetAllLocationsAsync ( )
+        //{
+        //    var locations = await UnitOfWork.readRepository<Location> ( )
+        //        .GetAllAsync ( predicate: l => ( l.IsDeleted == false || l.IsDeleted == null ) );
+
+        //    return Mapper.Map<IEnumerable<GetLocationRequestDTO>> ( locations );
+        //}
+        //#endregion
+
+        //#region Retrieve all locations Pagination
+        //public async Task<IEnumerable<GetLocationRequestDTO>> GetAllByPaginationLocationsAsync ( int currentPage = 1, int pageSize = 10 )
+        //{
+        //    var locations = await UnitOfWork.readRepository<Location> ( )
+        //        .GetAllByPagningAsync ( predicate: l => ( l.IsDeleted == false || l.IsDeleted == null ), pageSize: pageSize, currentPage: currentPage );
+
+        //    return Mapper.Map<IEnumerable<GetLocationRequestDTO>> ( locations );
+        //}
+        //#endregion
 
         #region Update a location (Fixed Logic)
         public async Task UpdateLocationAsync ( string barcode, UpdateLocationRequestDTO dto )

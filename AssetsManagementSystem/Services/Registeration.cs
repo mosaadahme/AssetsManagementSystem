@@ -34,6 +34,7 @@ namespace AssetsManagementSystem.Services
             services.AddScoped<AuditTrailService>();
 
             services.AddScoped<DataConsistencyCheckService>();
+
             services.AddScoped<InventoryService> ( );
         }
     }
