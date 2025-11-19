@@ -203,7 +203,7 @@ namespace AssetsManagementSystem.Services.Assets
             // 1. التحقق من العلاقات (Foreign Keys)
             await ValidateForeignKeysAndCategoryRelationAsync ( dto );
 
-            // 2. جلب كود الفئة (Category Code) وتجهيز بادئة الباركود
+            // 2. جلب كود الفئة وتجهيز الباركود
             var category = await UnitOfWork.readRepository<Category> ( ).GetAsync (
                 predicate: c => c.Id == dto.CategoryId,
                 include: source => source.Include ( c => c.ParentCategory )
@@ -211,13 +211,11 @@ namespace AssetsManagementSystem.Services.Assets
 
             if ( category == null ) throw new InvalidOperationException ( "Category not found." );
 
-            // مثال: IT-LAP أو FUR-CHR
             string barcodePrefix = category.ParentCategory != null
                 ? $"{category.ParentCategory.SerialCode}-{category.SerialCode}"
                 : category.SerialCode;
 
             // 3. معرفة آخر رقم تسلسلي (Smart Sequence Logic)
-            // بنستخدم Paging عشان نجيب سطر واحد بس (الأخير) بدل تحميل كل البيانات
             var lastAssetList = await UnitOfWork.readRepository<Asset> ( ).GetAllByPagningAsync (
                 predicate: a => a.Barcode.StartsWith ( barcodePrefix ),
                 orderby: q => q.OrderByDescending ( a => a.Barcode ),
@@ -236,54 +234,56 @@ namespace AssetsManagementSystem.Services.Assets
                 }
             }
 
-            // 4. تجهيز القوائم للإضافة
             var assetsToAdd = new List<Asset> ( );
             var generatedBarcodes = new List<string> ( );
 
-            // تحديد طريقة الإضافة: هل هي كمية مجمعة (ورق) أم أصول فردية (لابتوب)؟
-            // الشرط: لو الكمية > 1 ومفيش سيريالات جاية، نعتبرها Bulk Consumable (سطر واحد)
-            // غير كده بنعمل Loop (سطور متعددة)
-            bool isBulkConsumable = dto.Quantity > 1 && ( dto.SerialNumbers == null || !dto.SerialNumbers.Any ( ) ) && dto.SerialNumber == null;
+            // ---------------------------------------------------------
+            // التعديل الجوهري هنا (Logic Refactoring)
+            // ---------------------------------------------------------
+
+            // تحديد هل هو Bulk Consumable؟
+            // الشرط: الكمية > 1 + مفيش أي سيريالات في الليستة
+            bool isBulkConsumable = dto.Quantity > 1 && ( dto.SerialNumbers == null || !dto.SerialNumbers.Any ( ) );
 
             int loopCount = isBulkConsumable ? 1 : dto.Quantity;
 
             for ( int i = 0; i < loopCount; i++ )
             {
                 currentSequence++;
-                // تكوين الباركود: Prefix + 6 Digits (e.g., IT-LAP-000055)
                 string newBarcode = $"{barcodePrefix}-{currentSequence.ToString ( ).PadLeft ( 6, '0' )}";
 
                 var asset = Mapper.Map<Asset> ( dto );
 
-                // ضبط البيانات التي لا تأتي من الـ Mapper
                 asset.Barcode = newBarcode;
                 asset.AddedOnDate = DateTime.Now;
-                asset.CategoryId = dto.CategoryId; // تأكيد الـ ID
+                asset.CategoryId = dto.CategoryId;
 
                 if ( isBulkConsumable )
                 {
-                    // حالة المستهلكات: سطر واحد بالكمية كلها
+                    // حالة المستهلكات (ورق/أقلام): سطر واحد بالكمية كلها وبدون سيريال
                     asset.Quantity = dto.Quantity;
                     asset.SerialNumber = null;
                 }
                 else
                 {
-                    // حالة الأصول: كل سطر بكمية 1
+                    // حالة الأصول (لابتوب/كرسي): سطر لكل قطعة
                     asset.Quantity = 1;
 
-                    // توزيع السيريالات
+                    // التعامل مع السيريالات من الليستة الموحدة
                     if ( dto.SerialNumbers != null && dto.SerialNumbers.Count > i )
                     {
+                        // بناخد السيريال اللي عليه الدور في الليستة
                         asset.SerialNumber = dto.SerialNumbers [i];
 
-                        // تحقق سريع من تكرار السيريال (اختياري هنا لو الداتابيز عليها Index)
+                        // التحقق من التكرار
                         var exists = await UnitOfWork.readRepository<Asset> ( ).GetAsync ( a => a.SerialNumber == asset.SerialNumber );
-                        if ( exists != null ) throw new InvalidOperationException ( $"Serial Number {asset.SerialNumber} already exists." );
+                        if ( exists != null )
+                            throw new InvalidOperationException ( $"Serial Number {asset.SerialNumber} already exists." );
                     }
                     else
                     {
-                        // لو هو عنصر واحد بس والسيريال في الحقل العادي
-                        asset.SerialNumber = dto.SerialNumber;
+                        // لو مفيش سيريال في الليستة (زي الكراسي أو لو اليوزر نسي يدخلهم)
+                        asset.SerialNumber = null;
                     }
                 }
 
@@ -291,33 +291,30 @@ namespace AssetsManagementSystem.Services.Assets
                 generatedBarcodes.Add ( newBarcode );
             }
 
-            // 5. الحفظ في قاعدة البيانات (Transaction)
+            // ---------------------------------------------------------
+
+            // 5. الحفظ (Transaction)
             await UnitOfWork.BeginTransactionAsync ( );
             try
             {
-                // إضافة الكل مرة واحدة (Performance Boost)
                 await UnitOfWork.writeRepository<Asset> ( ).AddRangeAsync ( assetsToAdd );
-                await UnitOfWork.SaveChangeAsync ( ); // عشان الـ IDs تتولد
+                await UnitOfWork.SaveChangeAsync ( );
 
-                // إضافة الموردين (Suppliers)
                 if ( dto.SupplierIds != null && dto.SupplierIds.Any ( ) )
                 {
                     foreach ( var addedAsset in assetsToAdd )
                     {
-                        // استدعاء دالتك الخاصة بإضافة الموردين
                         await AddOrUpdateAssetSuppliers ( addedAsset.Id, dto.SupplierIds );
                     }
-                    // حفظ علاقات الموردين
                     await UnitOfWork.SaveChangeAsync ( );
                 }
 
-                // تسجيل Audit Trail (سجل واحد للعملية كلها لتخفيف الحمل)
                 var auditTrail = new AuditTrail ( )
                 {
                     AddedOn = DateTime.Now,
                     Action = "Add",
                     EntityType = "Asset",
-                    EntityName = $"{loopCount} Assets added to {category.Name} (Batch)",
+                    EntityName = $"{loopCount} Assets added to {category.Name}",
                     UserId = UserId ?? "System"
                 };
 
@@ -326,7 +323,6 @@ namespace AssetsManagementSystem.Services.Assets
 
                 await UnitOfWork.CommitTransactionAsync ( );
 
-                // إرجاع لستة الباركودات للفرونت إند (للطباعة)
                 return generatedBarcodes;
             }
             catch ( Exception )
