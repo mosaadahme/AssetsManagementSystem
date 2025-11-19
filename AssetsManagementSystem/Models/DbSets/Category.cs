@@ -10,6 +10,10 @@
 
         [MaxLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]
         public string Description { get; set; }
+
+        [Required ( ErrorMessage = "Serial Code is required." )]
+        [MaxLength ( 10, ErrorMessage = "Code cannot exceed 10 characters." )]
+        [RegularExpression ( @"^[A-Z0-9]+$", ErrorMessage = "Code must be uppercase letters and numbers only (e.g., 'IT', 'FUR')." )]
         public string SerialCode { get; set; }
 
         public int? ParentCategoryId { get; set; }

@@ -8,14 +8,15 @@ namespace AssetsManagementSystem.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Asset> builder)
         {
-            
+            builder.HasIndex(a => a.Barcode)
+                   .IsUnique();
+
             builder.HasOne(m => m.Manufacturer)
                .WithMany(a => a.Assets)
                .HasForeignKey(fk => fk.ManufacturerId)
-               .IsRequired(true);
+               .IsRequired(false);
 
-          //  builder.HasKey(a => a.SerialNumber);
-           // builder.ToTable(nameof(Asset),a=>a.IsTemporal());
+           
         }
     }
 }

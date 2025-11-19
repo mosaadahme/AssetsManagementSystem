@@ -8,6 +8,9 @@ namespace AssetsManagementSystem.Models.Enums
         IT = 0,
 
         [EnumMember(Value = "Non-IT")]
-        NonIT = 1
+        NonIT = 1,
+
+        [EnumMember(Value = "Consumable")]
+        Consumable = 2
     }
 }

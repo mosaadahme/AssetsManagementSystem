@@ -3,7 +3,7 @@
     public class LocationToLocationTransferDTO
     {
         [Required(ErrorMessage = "Asset ID is required.")]
-        public string AssetSerialNumber { get; set; }
+        public string AssetBarcode { get; set; }
 
         [Required(ErrorMessage = "From Location ID is required.")]
         public string FromLocationBarcode { get; set; }

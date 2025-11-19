@@ -2,8 +2,8 @@
 {
     public class UserAndLocationTransferDTO
     {
-        [Required(ErrorMessage = "Asset Serial Number is required.")]
-        public string AssetSerialNumber { get; set; }
+        [Required(ErrorMessage = "Asset Barcode Number is required." )]
+        public string AssetBarcode { get; set; }
 
 
         [Required(ErrorMessage = "From User ID is required.")]
