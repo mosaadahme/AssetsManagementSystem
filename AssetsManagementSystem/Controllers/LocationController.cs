@@ -1,202 +1,181 @@
-﻿namespace AssetsManagementSystem.Controllers
+﻿using AssetsManagementSystem.DTOs.LocationDTOs;
+using AssetsManagementSystem.Services.Locations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AssetsManagementSystem.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route ( "api/[controller]/[action]" )]
     [ApiController]
+    // [Authorize] // يفضل تفعيلها على مستوى الكنترولر
     public class LocationController : ControllerBase
     {
         private readonly LocationService _locationService;
         private readonly ILogger<LocationController> _logger;
 
-        public LocationController(LocationService locationService, ILogger<LocationController> logger)
+        public LocationController ( LocationService locationService, ILogger<LocationController> logger )
         {
             _locationService = locationService;
             _logger = logger;
         }
 
-        #region AddNewLocation
-
-        [HttpPost("add")]
-        //[Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> AddLocation([FromBody] AddLocationRequestDTO addLocationRequest)
+        #region Add New Location
+        [HttpPost] // الروت هيكون: api/Location/AddLocation
+        // [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> AddLocation ( [FromBody] AddLocationRequestDTO addLocationRequest )
         {
-            if (!ModelState.IsValid)
+            // ملحوظة: [ApiController] بيعمل Check لـ ModelState تلقائي، بس لو حابب تعمل Log سيبه
+            if ( !ModelState.IsValid )
             {
-                _logger.LogWarning("Invalid model state for AddLocation request");
-                return BadRequest(ModelState);
+                _logger.LogWarning ( "Invalid model state for AddLocation request" );
+                return BadRequest ( ModelState );
             }
 
             try
             {
-                await _locationService.AddLocationAsync(addLocationRequest);
-                _logger.LogInformation($"Location '{addLocationRequest.Name}' added successfully.");
-                return Ok(new { Message = "Location added successfully" });
+                await _locationService.AddLocationAsync ( addLocationRequest );
+                _logger.LogInformation ( $"Location '{addLocationRequest.Name}' added successfully." );
+
+                // بنرجع 201 Created
+                return StatusCode ( StatusCodes.Status201Created, new { Message = "Location added successfully" } );
             }
-            catch (InvalidOperationException ex)
+            catch ( InvalidOperationException ex ) // تكرار الاسم أو الباركود
             {
-                _logger.LogWarning(ex, $"Attempt to add a duplicate location: {addLocationRequest.Name}");
-                return Conflict(new { Error = ex.Message });
+                _logger.LogWarning ( ex, "Duplicate location attempt." );
+                return Conflict ( new { Error = ex.Message } );
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger.LogError(ex, "Error occurred while adding location.");
-                return StatusCode(500, new { Error = "An error occurred while adding the location", Details = ex.Message });
+                _logger.LogError ( ex, "Error occurred while adding location." );
+                return StatusCode ( 500, new { Error = "An internal error occurred.", Details = ex.Message } );
             }
         }
-
         #endregion
 
-        #region GetLocationById
-
-        [HttpGet()]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
-
-        public async Task<IActionResult> GetLocationById(string locationBarcode)
+        #region Get Location By Barcode
+        // الروت هيكون: api/Location/GetLocationByBarcode/LOC-001
+        [HttpGet ( "{barcode}" )]
+        // [Authorize(Roles = "Admin,Manager,Auditor")]
+        public async Task<IActionResult> GetLocationByBarcode ( string barcode )
         {
-            if (string.IsNullOrEmpty(locationBarcode))
+            if ( string.IsNullOrEmpty ( barcode ) )
             {
-                _logger.LogWarning("Invalid location ID in GetLocationById request");
-                return BadRequest(new { Error = "Invalid location ID" });
+                return BadRequest ( new { Error = "Location Barcode is required" } );
             }
 
             try
             {
-                var location = await _locationService.GetLocationByIdAsync(locationBarcode);
-                _logger.LogInformation($"Location with ID {locationBarcode} retrieved successfully.");
-                return Ok(location);
+                // تم تعديل اسم الدالة لتطابق السيرفيس الجديدة
+                var location = await _locationService.GetLocationByBarcodeAsync ( barcode );
+                return Ok ( location );
             }
-            catch (KeyNotFoundException ex)
+            catch ( KeyNotFoundException ex )
             {
-                _logger.LogWarning(ex, $"Location with ID {locationBarcode} not found.");
-                return NotFound(new { Error = ex.Message });
+                _logger.LogWarning ( "Location not found: {Barcode}", barcode );
+                return NotFound ( new { Error = ex.Message } );
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger.LogError(ex, "Error occurred while retrieving location.");
-                return StatusCode(500, new { Error = "An error occurred while retrieving the location", Details = ex.Message });
+                _logger.LogError ( ex, "Error retrieving location: {Barcode}", barcode );
+                return BadRequest ( new { Error = ex.Message } );
             }
         }
-
         #endregion
 
-        #region GetAllLocations
-
-        [HttpGet("all")]
-        //[Authorize(Roles = "Admin,Manager,Auditor")]
-
-        public async Task<IActionResult> GetAllLocations()
+        #region Get All Locations
+        [HttpGet] // الروت: api/Location/GetAllLocations
+        public async Task<IActionResult> GetAllLocations ( )
         {
             try
             {
-                var locations = await _locationService.GetAllLocationsAsync();
-                _logger.LogInformation("All locations retrieved successfully.");
-                return Ok(locations);
+                var locations = await _locationService.GetAllLocationsAsync ( );
+                return Ok ( locations );
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger.LogError(ex, "Error occurred while retrieving all locations.");
-                return StatusCode(500, new { Error = "An error occurred while retrieving the locations", Details = ex.Message });
+                _logger.LogError ( ex, "Error retrieving all locations." );
+                return BadRequest ( new { Error = ex.Message } );
             }
         }
-
         #endregion
 
-        #region GetByPaginationLocations
-
-        [HttpGet("ByPagination")]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
-
-        public async Task<IActionResult> GetLocationsByPagination(int currentPage, int pageSize)
+        #region Get Locations By Pagination
+        [HttpGet] // الروت: api/Location/GetLocationsByPagination?currentPage=1&pageSize=10
+        public async Task<IActionResult> GetLocationsByPagination ( [FromQuery] int currentPage = 1, [FromQuery] int pageSize = 10 )
         {
             try
             {
-                var locations = await _locationService.GetAllByPaginationLocationsAsync(currentPage, pageSize);
-                _logger.LogInformation("All locations retrieved successfully.");
-                return Ok(locations);
+                var locations = await _locationService.GetAllByPaginationLocationsAsync ( currentPage, pageSize );
+                return Ok ( locations );
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger.LogError(ex, "Error occurred while retrieving all locations.");
-                return StatusCode(500, new { Error = "An error occurred while retrieving the locations", Details = ex.Message });
+                _logger.LogError ( ex, "Error retrieving paginated locations." );
+                return BadRequest ( new { Error = ex.Message } );
             }
         }
-
         #endregion
 
-        #region UpdateLocation
-
-        [HttpPut("update/{locationBarcode}")]
-        //[Authorize(Roles = "Admin,Manager")]
-
-        public async Task<IActionResult> UpdateLocation(string locationBarcode, [FromBody] UpdateLocationRequestDTO updateLocationRequest)
+        #region Update Location
+        // الروت: api/Location/UpdateLocation/LOC-001
+        [HttpPut ( "{barcode}" )]
+        // [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> UpdateLocation ( string barcode, [FromBody] UpdateLocationRequestDTO updateLocationRequest )
         {
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Invalid model state for UpdateLocation request");
-                return BadRequest(ModelState);
-            }
-
-            if (string.IsNullOrEmpty(locationBarcode))
-            {
-                _logger.LogWarning("Invalid location ID in UpdateLocation request");
-                return BadRequest(new { Error = "Invalid location ID" });
-            }
+            if ( string.IsNullOrEmpty ( barcode ) ) return BadRequest ( new { Error = "Barcode is required" } );
 
             try
             {
-                await _locationService.UpdateLocationAsync(locationBarcode, updateLocationRequest);
-                _logger.LogInformation($"Location with ID {locationBarcode} updated successfully.");
-                return Ok(new { Message = "Location updated successfully" });
+                await _locationService.UpdateLocationAsync ( barcode, updateLocationRequest );
+
+                _logger.LogInformation ( "Location updated: {Barcode}", barcode );
+                return Ok ( new { Message = "Location updated successfully" } );
             }
-            catch (InvalidOperationException ex)
+            catch ( KeyNotFoundException ex )
             {
-                _logger.LogWarning(ex, $"Attempt to update location with duplicate name: {updateLocationRequest.Name}");
-                return Conflict(new { Error = ex.Message });
+                return NotFound ( new { Error = ex.Message } );
             }
-            catch (KeyNotFoundException ex)
+            catch ( InvalidOperationException ex ) // تكرار الاسم
             {
-                _logger.LogWarning(ex, $"Location with ID {locationBarcode} not found.");
-                return NotFound(new { Error = ex.Message });
+                return Conflict ( new { Error = ex.Message } );
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger.LogError(ex, "Error occurred while updating location.");
-                return StatusCode(500, new { Error = "An error occurred while updating the location", Details = ex.Message });
+                _logger.LogError ( ex, "Error updating location: {Barcode}", barcode );
+                return BadRequest ( new { Error = ex.Message } );
             }
         }
-
         #endregion
 
-        #region DeleteLocation
-
-        [HttpDelete("delete/{locationBarcode}")]
-        //[Authorize(Roles = "Admin,Manager")]
-
-        public async Task<IActionResult> DeleteLocation(string locationBarcode)
+        #region Delete Location
+        // الروت: api/Location/DeleteLocation/LOC-001
+        [HttpDelete ( "{barcode}" )]
+        // [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> DeleteLocation ( string barcode )
         {
-            if (string.IsNullOrEmpty(locationBarcode))
-            {
-                _logger.LogWarning("Invalid location ID in DeleteLocation request");
-                return BadRequest(new { Error = "Invalid location ID" });
-            }
+            if ( string.IsNullOrEmpty ( barcode ) ) return BadRequest ( new { Error = "Barcode is required" } );
 
             try
             {
-                await _locationService.DeleteLocationAsync(locationBarcode);
-                _logger.LogInformation($"Location with ID {locationBarcode} deleted successfully.");
-                return Ok(new { Message = "Location deleted successfully" });
+                await _locationService.DeleteLocationAsync ( barcode );
+
+                _logger.LogInformation ( "Location deleted: {Barcode}", barcode );
+                return Ok ( new { Message = "Location deleted successfully" } );
             }
-            catch (KeyNotFoundException ex)
+            catch ( KeyNotFoundException ex )
             {
-                _logger.LogWarning(ex, $"Location with ID {locationBarcode} not found.");
-                return NotFound(new { Error = ex.Message });
+                return NotFound ( new { Error = ex.Message } );
             }
-            catch (Exception ex)
+            catch ( InvalidOperationException ex ) // لو المكان فيه Assets
             {
-                _logger.LogError(ex, "Error occurred while deleting location.");
-                return StatusCode(500, new { Error = "An error occurred while deleting the location", Details = ex.Message });
+                return BadRequest ( new { Error = ex.Message } ); // 400 Bad Request
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "Error deleting location: {Barcode}", barcode );
+                return StatusCode ( 500, new { Error = "Internal error", Details = ex.Message } );
             }
         }
-
         #endregion
     }
 }

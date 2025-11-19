@@ -254,9 +254,20 @@ namespace AssetsManagementSystem.Services.Assets
 
                 var asset = Mapper.Map<Asset> ( dto );
 
+                asset.Status = dto.Status.ToString ( );
+                asset.ModelNumber = dto.ModelNumber;  
+                asset.Name = dto.Name;             
+                asset.Description = dto.Description;
+                asset.PurchasePrice = dto.PurchasePrice;
+                asset.PurchaseDate = dto.PurchaseDate;
+                asset.WarrantyExpiryDate = dto.WarrantyExpiryDate;
+                asset.DepreciationDate = dto.DepreciationDate;
+                asset.LocationId = dto.LocationId;
+                asset.Status = dto.Status.ToString ( );
                 asset.Barcode = newBarcode;
                 asset.AddedOnDate = DateTime.Now;
                 asset.CategoryId = dto.CategoryId;
+
 
                 if ( isBulkConsumable )
                 {
