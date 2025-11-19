@@ -1,4 +1,5 @@
-﻿using AssetsManagementSystem.Services.Manfacture;
+﻿using AssetsManagementSystem.Services.Inventory;
+using AssetsManagementSystem.Services.Manfacture;
 
 namespace AssetsManagementSystem.Services
 {
@@ -33,6 +34,7 @@ namespace AssetsManagementSystem.Services
             services.AddScoped<AuditTrailService>();
 
             services.AddScoped<DataConsistencyCheckService>();
+            services.AddScoped<InventoryService> ( );
         }
     }
 }
