@@ -136,6 +136,201 @@ namespace AssetsManagementSystem.Services.Assets
 
         #region Add Asset
 
+
+        public async Task<List<string>> AddAssetAsync ( AddAssetRequestDTO dto )
+        {
+            // 1. التحقق من صحة العلاقات (Category, Location, User...)
+            await ValidateForeignKeysAndCategoryRelationAsync ( dto );
+
+            // -------------------------------------------------------
+            // 🔥 خطوة الأداء العالي: فحص السيريالات دفعة واحدة (Batch Check)
+            // -------------------------------------------------------
+            if ( dto.SerialNumbers != null && dto.SerialNumbers.Any ( ) )
+            {
+                // التأكد من عدم وجود تكرار داخل القائمة المرسلة نفسها
+                if ( dto.SerialNumbers.Distinct ( ).Count ( ) != dto.SerialNumbers.Count )
+                    throw new InvalidOperationException ( "Duplicate serial numbers found in the request list." );
+
+                // التأكد من عدم وجود السيريالات دي مسبقاً في الداتابيز
+                var existingAssets = await UnitOfWork.readRepository<Asset> ( )
+                    .GetAllAsync ( a => dto.SerialNumbers.Contains ( a.SerialNumber )
+                                   && ( a.IsDeleted == false || a.IsDeleted == null ) );
+
+                if ( existingAssets.Any ( ) )
+                {
+                    var duplicateSerials = string.Join ( ", ", existingAssets.Select ( a => a.SerialNumber ) );
+                    throw new InvalidOperationException ( $"The following Serial Numbers already exist in database: {duplicateSerials}" );
+                }
+            }
+
+            // 2. تجهيز الباركود (Prefix & Last Sequence)
+            var category = await UnitOfWork.readRepository<Category> ( ).GetAsync (
+                predicate: c => c.Id == dto.CategoryId,
+                include: s => s.Include ( x => x.ParentCategory ) );
+
+            if ( category == null ) throw new InvalidOperationException ( "Category not found." );
+
+            string barcodePrefix = category.ParentCategory != null
+                ? $"{category.ParentCategory.SerialCode}-{category.SerialCode}"
+                : category.SerialCode;
+
+            // بنجيب أخر رقم وصلنا له عشان نكمل عليه
+            var lastAssetList = await UnitOfWork.readRepository<Asset> ( ).GetAllByPagningAsync (
+                predicate: a => a.Barcode.StartsWith ( barcodePrefix ),
+                orderby: q => q.OrderByDescending ( a => a.Barcode ),
+                currentPage: 1, pageSize: 1 );
+
+            int currentSequence = 0;
+            var lastAsset = lastAssetList.FirstOrDefault ( );
+            if ( lastAsset != null )
+            {
+                var parts = lastAsset.Barcode.Split ( '-' );
+                if ( parts.Length > 0 && int.TryParse ( parts.Last ( ), out int seq ) )
+                    currentSequence = seq;
+            }
+
+            var assetsToAdd = new List<Asset> ( );
+            var generatedBarcodes = new List<string> ( );
+
+           
+            if ( dto.AssetType == AssetType.Consumable )
+            {
+              
+                currentSequence++;
+                string newBarcode = $"{barcodePrefix}-{currentSequence.ToString ( ).PadLeft ( 6, '0' )}";
+
+                // Manual Mapping (لتفادي مشاكل AutoMapper مع الـ Enum)
+                var asset = new Asset
+                {
+                    Name = dto.Name,
+                    ModelNumber = dto.ModelNumber,
+                    Description = dto.Description,
+                    AssetType = dto.AssetType,
+                    Status = dto.Status.ToString ( ), // تحويل الـ Enum لنص صريح
+                    PurchaseDate = dto.PurchaseDate,
+                    PurchasePrice = dto.PurchasePrice,
+                    WarrantyExpiryDate = dto.WarrantyExpiryDate,
+                    DepreciationDate = dto.DepreciationDate,
+                    LocationId = dto.LocationId,
+                    CategoryId = dto.CategoryId,
+                    ManufacturerId = dto.ManufacturerId,
+                    AssignedUserId = dto.AssignedUserId,
+                    AddedOnDate = DateTime.Now,
+
+                    // خصائص الـ Bulk
+                    Barcode = newBarcode,
+                    Quantity = dto.Quantity,        // الكمية كلها هنا
+                    MinQuantityLimit = dto.MinQuantityLimit,
+                    SerialNumber = null             // المستهلكات ملهاش سيريال
+                };
+
+                assetsToAdd.Add ( asset );
+                generatedBarcodes.Add ( newBarcode );
+            }
+            else
+            {
+                // === الحالة 2: أصول ثابتة (IT & Non-IT) ===
+                // تكرار بعدد الكمية - كل سطر كمية 1 - سيريال حسب النوع
+
+                for ( int i = 0; i < dto.Quantity; i++ )
+                {
+                    currentSequence++;
+                    string newBarcode = $"{barcodePrefix}-{currentSequence.ToString ( ).PadLeft ( 6, '0' )}";
+
+                    var asset = new Asset
+                    {
+                        Name = dto.Name,
+                        ModelNumber = dto.ModelNumber,
+                        Description = dto.Description,
+                        AssetType = dto.AssetType,
+                        Status = dto.Status.ToString ( ),
+                        PurchaseDate = dto.PurchaseDate,
+                        PurchasePrice = dto.PurchasePrice,
+                        WarrantyExpiryDate = dto.WarrantyExpiryDate,
+                        DepreciationDate = dto.DepreciationDate,
+                        LocationId = dto.LocationId,
+                        CategoryId = dto.CategoryId,
+                        ManufacturerId = dto.ManufacturerId,
+                        AssignedUserId = dto.AssignedUserId,
+                        AddedOnDate = DateTime.Now,
+
+                        // خصائص الـ Individual
+                        Barcode = newBarcode,
+                        Quantity = 1,              // دايماً 1
+                        MinQuantityLimit = null    // غالباً مش بنحتاجه هنا
+                    };
+
+                    // --- منطق السيريال ---
+                    if ( dto.AssetType == AssetType.IT )
+                    {
+                        // IT: لازم سيريال لكل قطعة
+                        if ( dto.SerialNumbers != null && dto.SerialNumbers.Count > i )
+                        {
+                            asset.SerialNumber = dto.SerialNumbers [i];
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException ( $"Serial Number is missing for IT Asset number {i + 1}." );
+                        }
+                    }
+                    else // Non-IT
+                    {
+                        // Non-IT: السيريال اختياري
+                        if ( dto.SerialNumbers != null && dto.SerialNumbers.Count > i )
+                            asset.SerialNumber = dto.SerialNumbers [i];
+                        else
+                            asset.SerialNumber = null;
+                    }
+
+                    assetsToAdd.Add ( asset );
+                    generatedBarcodes.Add ( newBarcode );
+                }
+            }
+
+            // 3. الحفظ (Transaction)
+            await UnitOfWork.BeginTransactionAsync ( );
+            try
+            {
+                // إضافة الأصول دفعة واحدة
+                await UnitOfWork.writeRepository<Asset> ( ).AddRangeAsync ( assetsToAdd );
+                await UnitOfWork.SaveChangeAsync ( );
+
+                // إضافة الموردين
+                if ( dto.SupplierIds != null && dto.SupplierIds.Any ( ) )
+                {
+                    foreach ( var addedAsset in assetsToAdd )
+                    {
+                        await AddOrUpdateAssetSuppliers ( addedAsset.Id, dto.SupplierIds );
+                    }
+                    await UnitOfWork.SaveChangeAsync ( );
+                }
+
+                // تسجيل Audit Trail
+                var auditTrail = new AuditTrail ( )
+                {
+                    AddedOn = DateTime.Now,
+                    Action = "Add",
+                    EntityType = "Asset",
+                    EntityName = $"{assetsToAdd.Count} Assets of type {dto.AssetType} added",
+                    UserId = UserId ?? "System"
+                };
+                await UnitOfWork.writeRepository<AuditTrail> ( ).AddAsync ( auditTrail );
+                await UnitOfWork.SaveChangeAsync ( );
+
+                await UnitOfWork.CommitTransactionAsync ( );
+
+                return generatedBarcodes;
+            }
+            catch
+            {
+                await UnitOfWork.RollbackTransactionAsync ( );
+                throw;
+            }
+        }
+
+
+
+
         #region Old Add Asset Method
         //public async Task<GetAssetResponseDTO> AddAssetAsync(AddAssetRequestDTO addAssetDto)
         //{
@@ -198,150 +393,150 @@ namespace AssetsManagementSystem.Services.Assets
 
         #endregion
 
-        public async Task<List<string>> AddAssetAsync ( AddAssetRequestDTO dto )
-        {
-            // 1. التحقق من العلاقات (Foreign Keys)
-            await ValidateForeignKeysAndCategoryRelationAsync ( dto );
+        //public async Task<List<string>> AddAssetAsync ( AddAssetRequestDTO dto )
+        //{
+        //    // 1. التحقق من العلاقات (Foreign Keys)
+        //    await ValidateForeignKeysAndCategoryRelationAsync ( dto );
 
-            // 2. جلب كود الفئة وتجهيز الباركود
-            var category = await UnitOfWork.readRepository<Category> ( ).GetAsync (
-                predicate: c => c.Id == dto.CategoryId,
-                include: source => source.Include ( c => c.ParentCategory )
-            );
+        //    // 2. جلب كود الفئة وتجهيز الباركود
+        //    var category = await UnitOfWork.readRepository<Category> ( ).GetAsync (
+        //        predicate: c => c.Id == dto.CategoryId,
+        //        include: source => source.Include ( c => c.ParentCategory )
+        //    );
 
-            if ( category == null ) throw new InvalidOperationException ( "Category not found." );
+        //    if ( category == null ) throw new InvalidOperationException ( "Category not found." );
 
-            string barcodePrefix = category.ParentCategory != null
-                ? $"{category.ParentCategory.SerialCode}-{category.SerialCode}"
-                : category.SerialCode;
+        //    string barcodePrefix = category.ParentCategory != null
+        //        ? $"{category.ParentCategory.SerialCode}-{category.SerialCode}"
+        //        : category.SerialCode;
 
-            // 3. معرفة آخر رقم تسلسلي (Smart Sequence Logic)
-            var lastAssetList = await UnitOfWork.readRepository<Asset> ( ).GetAllByPagningAsync (
-                predicate: a => a.Barcode.StartsWith ( barcodePrefix ),
-                orderby: q => q.OrderByDescending ( a => a.Barcode ),
-                currentPage: 1,
-                pageSize: 1
-            );
+        //    // 3. معرفة آخر رقم تسلسلي (Smart Sequence Logic)
+        //    var lastAssetList = await UnitOfWork.readRepository<Asset> ( ).GetAllByPagningAsync (
+        //        predicate: a => a.Barcode.StartsWith ( barcodePrefix ),
+        //        orderby: q => q.OrderByDescending ( a => a.Barcode ),
+        //        currentPage: 1,
+        //        pageSize: 1
+        //    );
 
-            int currentSequence = 0;
-            var lastAsset = lastAssetList.FirstOrDefault ( );
-            if ( lastAsset != null )
-            {
-                var parts = lastAsset.Barcode.Split ( '-' );
-                if ( parts.Length > 0 && int.TryParse ( parts.Last ( ), out int seq ) )
-                {
-                    currentSequence = seq;
-                }
-            }
+        //    int currentSequence = 0;
+        //    var lastAsset = lastAssetList.FirstOrDefault ( );
+        //    if ( lastAsset != null )
+        //    {
+        //        var parts = lastAsset.Barcode.Split ( '-' );
+        //        if ( parts.Length > 0 && int.TryParse ( parts.Last ( ), out int seq ) )
+        //        {
+        //            currentSequence = seq;
+        //        }
+        //    }
 
-            var assetsToAdd = new List<Asset> ( );
-            var generatedBarcodes = new List<string> ( );
+        //    var assetsToAdd = new List<Asset> ( );
+        //    var generatedBarcodes = new List<string> ( );
 
-            // ---------------------------------------------------------
-            // التعديل الجوهري هنا (Logic Refactoring)
-            // ---------------------------------------------------------
+        //    // ---------------------------------------------------------
+        //    // التعديل الجوهري هنا (Logic Refactoring)
+        //    // ---------------------------------------------------------
 
-            // تحديد هل هو Bulk Consumable؟
-            // الشرط: الكمية > 1 + مفيش أي سيريالات في الليستة
-            bool isBulkConsumable = dto.Quantity > 1 && ( dto.SerialNumbers == null || !dto.SerialNumbers.Any ( ) );
+        //    // تحديد هل هو Bulk Consumable؟
+        //    // الشرط: الكمية > 1 + مفيش أي سيريالات في الليستة
+        //    bool isBulkConsumable = dto.Quantity > 1 && ( dto.SerialNumbers == null || !dto.SerialNumbers.Any ( ) );
 
-            int loopCount = isBulkConsumable ? 1 : dto.Quantity;
+        //    int loopCount = isBulkConsumable ? 1 : dto.Quantity;
 
-            for ( int i = 0; i < loopCount; i++ )
-            {
-                currentSequence++;
-                string newBarcode = $"{barcodePrefix}-{currentSequence.ToString ( ).PadLeft ( 6, '0' )}";
+        //    for ( int i = 0; i < loopCount; i++ )
+        //    {
+        //        currentSequence++;
+        //        string newBarcode = $"{barcodePrefix}-{currentSequence.ToString ( ).PadLeft ( 6, '0' )}";
 
-                var asset = Mapper.Map<Asset> ( dto );
+        //        var asset = Mapper.Map<Asset> ( dto );
 
-                asset.Status = dto.Status.ToString ( );
-                asset.ModelNumber = dto.ModelNumber;  
-                asset.Name = dto.Name;             
-                asset.Description = dto.Description;
-                asset.PurchasePrice = dto.PurchasePrice;
-                asset.PurchaseDate = dto.PurchaseDate;
-                asset.WarrantyExpiryDate = dto.WarrantyExpiryDate;
-                asset.DepreciationDate = dto.DepreciationDate;
-                asset.LocationId = dto.LocationId;
-                asset.Status = dto.Status.ToString ( );
-                asset.Barcode = newBarcode;
-                asset.AddedOnDate = DateTime.Now;
-                asset.CategoryId = dto.CategoryId;
+        //        asset.Status = dto.Status.ToString ( );
+        //        asset.ModelNumber = dto.ModelNumber;  
+        //        asset.Name = dto.Name;             
+        //        asset.Description = dto.Description;
+        //        asset.PurchasePrice = dto.PurchasePrice;
+        //        asset.PurchaseDate = dto.PurchaseDate;
+        //        asset.WarrantyExpiryDate = dto.WarrantyExpiryDate;
+        //        asset.DepreciationDate = dto.DepreciationDate;
+        //        asset.LocationId = dto.LocationId;
+        //        asset.Status = dto.Status.ToString ( );
+        //        asset.Barcode = newBarcode;
+        //        asset.AddedOnDate = DateTime.Now;
+        //        asset.CategoryId = dto.CategoryId;
 
 
-                if ( isBulkConsumable )
-                {
-                    // حالة المستهلكات (ورق/أقلام): سطر واحد بالكمية كلها وبدون سيريال
-                    asset.Quantity = dto.Quantity;
-                    asset.SerialNumber = null;
-                }
-                else
-                {
-                    // حالة الأصول (لابتوب/كرسي): سطر لكل قطعة
-                    asset.Quantity = 1;
+        //        if ( isBulkConsumable )
+        //        {
+        //            // حالة المستهلكات (ورق/أقلام): سطر واحد بالكمية كلها وبدون سيريال
+        //            asset.Quantity = dto.Quantity;
+        //            asset.SerialNumber = null;
+        //        }
+        //        else
+        //        {
+        //            // حالة الأصول (لابتوب/كرسي): سطر لكل قطعة
+        //            asset.Quantity = 1;
 
-                    // التعامل مع السيريالات من الليستة الموحدة
-                    if ( dto.SerialNumbers != null && dto.SerialNumbers.Count > i )
-                    {
-                        // بناخد السيريال اللي عليه الدور في الليستة
-                        asset.SerialNumber = dto.SerialNumbers [i];
+        //            // التعامل مع السيريالات من الليستة الموحدة
+        //            if ( dto.SerialNumbers != null && dto.SerialNumbers.Count > i )
+        //            {
+        //                // بناخد السيريال اللي عليه الدور في الليستة
+        //                asset.SerialNumber = dto.SerialNumbers [i];
 
-                        // التحقق من التكرار
-                        var exists = await UnitOfWork.readRepository<Asset> ( ).GetAsync ( a => a.SerialNumber == asset.SerialNumber );
-                        if ( exists != null )
-                            throw new InvalidOperationException ( $"Serial Number {asset.SerialNumber} already exists." );
-                    }
-                    else
-                    {
-                        // لو مفيش سيريال في الليستة (زي الكراسي أو لو اليوزر نسي يدخلهم)
-                        asset.SerialNumber = null;
-                    }
-                }
+        //                // التحقق من التكرار
+        //                var exists = await UnitOfWork.readRepository<Asset> ( ).GetAsync ( a => a.SerialNumber == asset.SerialNumber );
+        //                if ( exists != null )
+        //                    throw new InvalidOperationException ( $"Serial Number {asset.SerialNumber} already exists." );
+        //            }
+        //            else
+        //            {
+        //                // لو مفيش سيريال في الليستة (زي الكراسي أو لو اليوزر نسي يدخلهم)
+        //                asset.SerialNumber = null;
+        //            }
+        //        }
 
-                assetsToAdd.Add ( asset );
-                generatedBarcodes.Add ( newBarcode );
-            }
+        //        assetsToAdd.Add ( asset );
+        //        generatedBarcodes.Add ( newBarcode );
+        //    }
 
-            // ---------------------------------------------------------
+        //    // ---------------------------------------------------------
 
-            // 5. الحفظ (Transaction)
-            await UnitOfWork.BeginTransactionAsync ( );
-            try
-            {
-                await UnitOfWork.writeRepository<Asset> ( ).AddRangeAsync ( assetsToAdd );
-                await UnitOfWork.SaveChangeAsync ( );
+        //    // 5. الحفظ (Transaction)
+        //    await UnitOfWork.BeginTransactionAsync ( );
+        //    try
+        //    {
+        //        await UnitOfWork.writeRepository<Asset> ( ).AddRangeAsync ( assetsToAdd );
+        //        await UnitOfWork.SaveChangeAsync ( );
 
-                if ( dto.SupplierIds != null && dto.SupplierIds.Any ( ) )
-                {
-                    foreach ( var addedAsset in assetsToAdd )
-                    {
-                        await AddOrUpdateAssetSuppliers ( addedAsset.Id, dto.SupplierIds );
-                    }
-                    await UnitOfWork.SaveChangeAsync ( );
-                }
+        //        if ( dto.SupplierIds != null && dto.SupplierIds.Any ( ) )
+        //        {
+        //            foreach ( var addedAsset in assetsToAdd )
+        //            {
+        //                await AddOrUpdateAssetSuppliers ( addedAsset.Id, dto.SupplierIds );
+        //            }
+        //            await UnitOfWork.SaveChangeAsync ( );
+        //        }
 
-                var auditTrail = new AuditTrail ( )
-                {
-                    AddedOn = DateTime.Now,
-                    Action = "Add",
-                    EntityType = "Asset",
-                    EntityName = $"{loopCount} Assets added to {category.Name}",
-                    UserId = UserId ?? "System"
-                };
+        //        var auditTrail = new AuditTrail ( )
+        //        {
+        //            AddedOn = DateTime.Now,
+        //            Action = "Add",
+        //            EntityType = "Asset",
+        //            EntityName = $"{loopCount} Assets added to {category.Name}",
+        //            UserId = UserId ?? "System"
+        //        };
 
-                await UnitOfWork.writeRepository<AuditTrail> ( ).AddAsync ( auditTrail );
-                await UnitOfWork.SaveChangeAsync ( );
+        //        await UnitOfWork.writeRepository<AuditTrail> ( ).AddAsync ( auditTrail );
+        //        await UnitOfWork.SaveChangeAsync ( );
 
-                await UnitOfWork.CommitTransactionAsync ( );
+        //        await UnitOfWork.CommitTransactionAsync ( );
 
-                return generatedBarcodes;
-            }
-            catch ( Exception )
-            {
-                await UnitOfWork.RollbackTransactionAsync ( );
-                throw;
-            }
-        }
+        //        return generatedBarcodes;
+        //    }
+        //    catch ( Exception )
+        //    {
+        //        await UnitOfWork.RollbackTransactionAsync ( );
+        //        throw;
+        //    }
+        //}
         #endregion
 
         #region Get Asset by Barcode

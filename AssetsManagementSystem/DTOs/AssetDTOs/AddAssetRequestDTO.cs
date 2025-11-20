@@ -13,9 +13,8 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [MaxLength ( 50, ErrorMessage = "Model number cannot exceed 50 characters." )]
         public string ModelNumber { get; set; }
 
-        //// 1. السيريال الفردي (لو كمية 1)
-        //[MaxLength ( 100, ErrorMessage = "Serial number cannot exceed 100 characters." )]
-        //public string? SerialNumber { get; set; }
+        [Required ( ErrorMessage = "Asset Type is required." )]
+        public AssetType AssetType { get; set; }
 
         // 2. إضافة جديدة: قائمة سيريالات (لو الكمية > 1 ونوع IT)
         public List<string>? SerialNumbers { get; set; }
