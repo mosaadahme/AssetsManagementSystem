@@ -23,6 +23,9 @@ namespace AssetsManagementSystem.Services.Manfacture
 
            var Manfacture= Mapper.Map<Manufacturer,AddManufacturerRequestDTO>(addManufacturerRequest);
             Manfacture.IsDeleted=false;
+            Manfacture.Info = addManufacturerRequest.Info;
+            Manfacture.Name = addManufacturerRequest.Name;
+      
             await UnitOfWork.writeRepository<Manufacturer>().AddAsync(Manfacture);
            await UnitOfWork.SaveChangeAsync();
 

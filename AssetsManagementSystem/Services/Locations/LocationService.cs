@@ -33,6 +33,10 @@ namespace AssetsManagementSystem.Services.Locations
 
             var location = Mapper.Map<Location> ( dto ); // AutoMapper handles mapping
             location.AddedOnDate = DateTime.Now;
+            location.Name=dto.Name;
+            location.Address=dto.Address;
+            location.Barcode=dto.Barcode;
+            location.Address=dto.Address;
 
             await UnitOfWork.writeRepository<Location> ( ).AddAsync ( location );
             await UnitOfWork.SaveChangeAsync ( );

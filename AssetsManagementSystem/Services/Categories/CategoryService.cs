@@ -76,7 +76,10 @@ namespace AssetsManagementSystem.Services.Categories
 
             category.AddedOnDate = DateTime.Now;
             category.ParentCategoryId = ( dto.ParentCategoryId == 0 ) ? null : dto.ParentCategoryId;
-
+            category.SerialCode = dto.SerialCode;
+            category.Name = dto.Name;
+            category.Description = dto.Description;
+ 
             await UnitOfWork.writeRepository<Category> ( ).AddAsync ( category );
             await UnitOfWork.SaveChangeAsync ( );
         }
