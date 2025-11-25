@@ -40,7 +40,9 @@ namespace AssetsManagementSystem
             builder.Services.AddSwaggerGen();
 
             //builder.Services.AddScoped<ReportService> ( );
-
+            // ...
+            builder.Services.AddScoped<AssetsManagementSystem.Services.Printing.PrintingService> ( );
+            // ...
             builder.Services.AddControllers()
                .AddJsonOptions(config =>
                    config.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

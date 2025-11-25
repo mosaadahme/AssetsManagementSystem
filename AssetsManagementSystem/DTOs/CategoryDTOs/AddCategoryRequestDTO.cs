@@ -15,6 +15,8 @@
         [RegularExpression ( @"^[A-Z0-9]+$", ErrorMessage = "Code must be uppercase letters/numbers only." )]
         public string SerialCode { get; set; }
 
+        [Required ( ErrorMessage = "Asset Type is required." )]
+        public AssetType? AssetType { get; set; }
         public int? ParentCategoryId { get; set; }
     }
 }

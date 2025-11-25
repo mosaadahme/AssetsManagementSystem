@@ -16,6 +16,9 @@
         [RegularExpression ( @"^[A-Z0-9]+$", ErrorMessage = "Code must be uppercase letters and numbers only (e.g., 'IT', 'FUR')." )]
         public string SerialCode { get; set; }
 
+        [Required]
+        public AssetType AssetType { get; set; }
+
         public int? ParentCategoryId { get; set; }
         public virtual Category ParentCategory { get; set; }
 

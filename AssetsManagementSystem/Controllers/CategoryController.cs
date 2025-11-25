@@ -135,7 +135,7 @@ namespace AssetsManagementSystem.Controllers
         {
             try
             {
-                var categories = await _categoryService.GetSubCategory(id);
+                var categories = await _categoryService.GetSubCategoriesAsync ( id);
                 _logger.LogInformation("All categories retrieved successfully.");
                 return Ok(categories);
             }
@@ -147,9 +147,26 @@ namespace AssetsManagementSystem.Controllers
         }
         #endregion
 
+        #region Get Categories By Asset Type
+        [HttpGet ( "ByType/{assetType}" )] // Example: api/Category/GetCategoriesByType/0
+        public async Task<IActionResult> GetCategoriesByType ( AssetType assetType )
+        {
+            try
+            {
+                // 1. استدعاء السيرفيس (لازم نضيف الدالة دي في السيرفيس الأول)
+                var categories = await _categoryService.GetCategoriesByTypeAsync ( assetType );
+                return Ok ( categories );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "Error retrieving categories for type {AssetType}", assetType );
+                return StatusCode ( 500, new { Error = "An error occurred while retrieving categories." } );
+            }
+        }
+        #endregion
 
         #region GetByPaginationCategories
-        [HttpGet("ByPagination")]
+        [HttpGet ("ByPagination")]
         [Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetCategoriesByPagination(int currentPage, int pageSize)

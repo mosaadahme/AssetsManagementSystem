@@ -45,6 +45,47 @@ namespace AssetsManagementSystem.Services.Categories
         //#endregion
 
 
+        //#region Add Category
+        //public async Task AddCategoryAsync ( AddCategoryRequestDTO dto )
+        //{
+        //    if ( dto == null ) throw new ArgumentNullException ( nameof ( dto ) );
+
+        //    // 1. Check Validations (Name & Code uniqueness)
+        //    var existingCategory = await UnitOfWork.readRepository<Category> ( )
+        //        .GetAsync ( c => ( c.Name == dto.Name || c.SerialCode == dto.SerialCode )
+        //                       && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+        //    if ( existingCategory != null )
+        //    {
+        //        if ( existingCategory.Name == dto.Name )
+        //            throw new InvalidOperationException ( $"Category with name '{dto.Name}' already exists." );
+        //        if ( existingCategory.SerialCode == dto.SerialCode )
+        //            throw new InvalidOperationException ( $"Category Code '{dto.SerialCode}' already exists." );
+        //    }
+
+        //    // 2. Validate Parent Category (if exists)
+        //    if ( dto.ParentCategoryId.HasValue && dto.ParentCategoryId > 0 )
+        //    {
+        //        var parent = await UnitOfWork.readRepository<Category> ( )
+        //            .GetAsync ( c => c.Id == dto.ParentCategoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+        //        if ( parent == null ) throw new KeyNotFoundException ( "Parent Category not found." );
+        //    }
+
+        //    var category = Mapper.Map<Category> ( dto ); // Correct AutoMapper syntax
+
+        //    category.AddedOnDate = DateTime.Now;
+        //    category.ParentCategoryId = ( dto.ParentCategoryId == 0 ) ? null : dto.ParentCategoryId;
+        //    category.SerialCode = dto.SerialCode;
+        //    category.Name = dto.Name;
+        //    category.Description = dto.Description;
+
+        //    await UnitOfWork.writeRepository<Category> ( ).AddAsync ( category );
+        //    await UnitOfWork.SaveChangeAsync ( );
+        //}
+        //#endregion
+
+
         #region Add Category
         public async Task AddCategoryAsync ( AddCategoryRequestDTO dto )
         {
@@ -53,7 +94,7 @@ namespace AssetsManagementSystem.Services.Categories
             // 1. Check Validations (Name & Code uniqueness)
             var existingCategory = await UnitOfWork.readRepository<Category> ( )
                 .GetAsync ( c => ( c.Name == dto.Name || c.SerialCode == dto.SerialCode )
-                               && ( c.IsDeleted == false || c.IsDeleted == null ) );
+                                && ( c.IsDeleted == false || c.IsDeleted == null ) );
 
             if ( existingCategory != null )
             {
@@ -63,28 +104,47 @@ namespace AssetsManagementSystem.Services.Categories
                     throw new InvalidOperationException ( $"Category Code '{dto.SerialCode}' already exists." );
             }
 
-            // 2. Validate Parent Category (if exists)
+            // تحويل البيانات الأساسية (الاسم، الوصف، الكود)
+            var category = Mapper.Map<Category> ( dto );
+            category.AddedOnDate = DateTime.Now;
+
+            // -------------------------------------------------------
+            // 🔥 اللوجيك الجديد: تحديد النوع (AssetType) والأب
+            // -------------------------------------------------------
+
             if ( dto.ParentCategoryId.HasValue && dto.ParentCategoryId > 0 )
             {
+                // === الحالة أ: إضافة فئة فرعية (Sub-Category) ===
+                // لازم نورث النوع من الأب عشان الداتا تكون سليمة
+
                 var parent = await UnitOfWork.readRepository<Category> ( )
                     .GetAsync ( c => c.Id == dto.ParentCategoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
 
                 if ( parent == null ) throw new KeyNotFoundException ( "Parent Category not found." );
+
+                // التوريث الإجباري: تجاهل ما أرسله اليوزر وخذ نوع الأب
+                category.AssetType = parent.AssetType;
+                category.ParentCategoryId = parent.Id;
+            }
+            else
+            {
+                // === الحالة ب: إضافة فئة رئيسية (Main Category) ===
+                // لازم اليوزر يكون محدد النوع بنفسه
+
+                if ( dto.AssetType == null )
+                {
+                    throw new InvalidOperationException ( "Asset Type is required for Main Categories." );
+                }
+
+                category.AssetType = dto.AssetType.Value;
+                category.ParentCategoryId = null;
             }
 
-            var category = Mapper.Map<Category> ( dto ); // Correct AutoMapper syntax
-
-            category.AddedOnDate = DateTime.Now;
-            category.ParentCategoryId = ( dto.ParentCategoryId == 0 ) ? null : dto.ParentCategoryId;
-            category.SerialCode = dto.SerialCode;
-            category.Name = dto.Name;
-            category.Description = dto.Description;
- 
+            // 3. الحفظ
             await UnitOfWork.writeRepository<Category> ( ).AddAsync ( category );
             await UnitOfWork.SaveChangeAsync ( );
         }
         #endregion
-
 
         #region Get Main Categories
         public async Task<IList<GetCategoryRequestDTO>> GetMainCategory ( )
@@ -108,14 +168,75 @@ namespace AssetsManagementSystem.Services.Categories
         #endregion
 
         #region Get SubCategories
-        public async Task<IList<GetCategoryRequestDTO>> GetSubCategory ( int parentId )
+        //public async Task<IList<GetCategoryRequestDTO>> GetSubCategory ( int parentId )
+        //{
+        //    var categories = await UnitOfWork.readRepository<Category> ( )
+        //        .GetAllAsync (
+        //            predicate: c => c.ParentCategoryId == parentId && ( c.IsDeleted == false || c.IsDeleted == null ),
+        //            include: src => src.Include ( c => c.ParentCategory ) // Include Parent Name
+        //        );
+
+        //    return categories.Select ( c => new GetCategoryRequestDTO
+        //    {
+        //        Id = c.Id,
+        //        Name = c.Name,
+        //        SerialCode = c.SerialCode,
+        //        Description = c.Description,
+        //        ParentCategoryId = c.ParentCategoryId,
+        //        ParentCategoryName = c.ParentCategory?.Name, // Safe Navigation
+        //        AddedOnDate = c.AddedOnDate,
+        //        UpdatedDate = c.UpdatedDate
+        //    } ).ToList ( );
+        //}
+
+
+        #region Get SubCategories by Parent ID
+        public async Task<IEnumerable<GetCategoryRequestDTO>> GetSubCategoriesAsync ( int parentId )
         {
-            var categories = await UnitOfWork.readRepository<Category> ( )
+            // 1. التحقق من الرقم
+            if ( parentId <= 0 ) throw new ArgumentException ( "Invalid Parent ID." );
+
+            // 2. جلب الأبناء فقط
+            var subCategories = await UnitOfWork.readRepository<Category> ( )
                 .GetAllAsync (
-                    predicate: c => c.ParentCategoryId == parentId && ( c.IsDeleted == false || c.IsDeleted == null ),
-                    include: src => src.Include ( c => c.ParentCategory ) // Include Parent Name
+                    predicate: c => c.ParentCategoryId == parentId
+                                 && ( c.IsDeleted == false || c.IsDeleted == null ),
+                    include: src => src.Include ( c => c.ParentCategory ) // عشان نجيب اسم الأب
                 );
 
+            // 3. التحويل اليدوي (Manual Mapping)
+            return subCategories.Select ( c => new GetCategoryRequestDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                SerialCode = c.SerialCode,
+                Description = c.Description,
+
+                // بيانات الأب
+                ParentCategoryId = c.ParentCategoryId,
+                ParentCategoryName = c.ParentCategory?.Name, // Safe navigation
+
+                // النوع (مهم جداً للفرونت)
+                AssetType = c.AssetType.ToString ( ),
+
+                AddedOnDate = c.AddedOnDate,
+                UpdatedDate = c.UpdatedDate
+            } ).ToList ( );
+        }
+        #endregion
+        #endregion
+
+        #region Get Categories By Type
+        public async Task<IEnumerable<GetCategoryRequestDTO>> GetCategoriesByTypeAsync ( AssetType assetType )
+        {
+            // بنجيب الفئات اللي:
+            // 1. نوعها مطابق للنوع المطلوب (IT, NonIT, Consumable)
+            // 2. مش ممسوحة
+            // 3. (اختياري) ممكن نجيب الفئات الفرعية بس لو عايز تمنع اختيار الأب المباشر
+            var categories = await UnitOfWork.readRepository<Category> ( )
+                .GetAllAsync ( c => c.AssetType == assetType && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+            // التحويل اليدوي (Manual Mapping) لضمان السرعة والدقة
             return categories.Select ( c => new GetCategoryRequestDTO
             {
                 Id = c.Id,
@@ -123,13 +244,13 @@ namespace AssetsManagementSystem.Services.Categories
                 SerialCode = c.SerialCode,
                 Description = c.Description,
                 ParentCategoryId = c.ParentCategoryId,
-                ParentCategoryName = c.ParentCategory?.Name, // Safe Navigation
+                // تحويل الـ Enum لنص عشان الفرونت يعرضه لو حب
+                AssetType = c.AssetType.ToString ( ),
                 AddedOnDate = c.AddedOnDate,
                 UpdatedDate = c.UpdatedDate
             } ).ToList ( );
         }
         #endregion
-
 
         #region Get By ID  
         public async Task<GetCategoryRequestDTO> GetCategoryByIdAsync ( int categoryId )
@@ -194,7 +315,9 @@ namespace AssetsManagementSystem.Services.Categories
             return getCategoryRequestDTOs;
 
         }
-        #endregion 
+        #endregion
+
+        #region Update Category
 
         #region Update Category
         public async Task UpdateCategoryAsync ( int categoryId, UpdateCategoryRequestDTO dto )
@@ -206,32 +329,82 @@ namespace AssetsManagementSystem.Services.Categories
 
             if ( category == null ) throw new KeyNotFoundException ( "Category not found." );
 
-            // Check Duplicate Name (excluding self)
+            // Check Duplicate Name
             var duplicateCheck = await UnitOfWork.readRepository<Category> ( )
                 .GetAsync ( c => c.Name == dto.Name && c.Id != categoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
 
             if ( duplicateCheck != null )
                 throw new InvalidOperationException ( $"Category name '{dto.Name}' is already taken." );
 
-            // Validate New Parent (Prevent Circular Dependency is complex, but check existence at least)
+            // -----------------------------------------------------------
+            // 🔥 التعديل الجوهري هنا: التحقق من الأب الجديد
+            // -----------------------------------------------------------
             if ( dto.ParentCategoryId.HasValue && dto.ParentCategoryId != category.ParentCategoryId )
             {
+                // 1. منع الدائرة المغلقة (البسيطة)
                 if ( dto.ParentCategoryId == category.Id )
                     throw new InvalidOperationException ( "Category cannot be its own parent." );
 
-                var parent = await UnitOfWork.readRepository<Category> ( )
-                    .GetAsync ( c => c.Id == dto.ParentCategoryId );
-                if ( parent == null ) throw new KeyNotFoundException ( "New Parent Category not found." );
+                // 2. جلب الأب الجديد
+                var newParent = await UnitOfWork.readRepository<Category> ( )
+                    .GetAsync ( c => c.Id == dto.ParentCategoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+                if ( newParent == null ) throw new KeyNotFoundException ( "New Parent Category not found." );
+
+                // 3. 🛑 الحماية: منع نقل الفئة تحت أب مختلف في النوع
+                if ( category.AssetType != newParent.AssetType )
+                {
+                    throw new InvalidOperationException (
+                        $"Type Mismatch: Cannot move category of type '{category.AssetType}' under a parent of type '{newParent.AssetType}'."
+                    );
+                }
             }
 
+            // Apply Updates
             category.Name = dto.Name;
             category.Description = dto.Description;
-            category.ParentCategoryId = dto.ParentCategoryId; // Allow updating parent
+            category.ParentCategoryId = dto.ParentCategoryId;
             category.UpdatedDate = DateTime.Now;
 
             await UnitOfWork.writeRepository<Category> ( ).UpdateAsync ( category.Id, category );
             await UnitOfWork.SaveChangeAsync ( );
         }
+        #endregion
+        //public async Task UpdateCategoryAsync ( int categoryId, UpdateCategoryRequestDTO dto )
+        //{
+        //    if ( dto == null ) throw new ArgumentNullException ( nameof ( dto ) );
+
+        //    var category = await UnitOfWork.readRepository<Category> ( )
+        //        .GetAsync ( c => c.Id == categoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+        //    if ( category == null ) throw new KeyNotFoundException ( "Category not found." );
+
+        //    // Check Duplicate Name (excluding self)
+        //    var duplicateCheck = await UnitOfWork.readRepository<Category> ( )
+        //        .GetAsync ( c => c.Name == dto.Name && c.Id != categoryId && ( c.IsDeleted == false || c.IsDeleted == null ) );
+
+        //    if ( duplicateCheck != null )
+        //        throw new InvalidOperationException ( $"Category name '{dto.Name}' is already taken." );
+
+        //    // Validate New Parent (Prevent Circular Dependency is complex, but check existence at least)
+        //    if ( dto.ParentCategoryId.HasValue && dto.ParentCategoryId != category.ParentCategoryId )
+        //    {
+        //        if ( dto.ParentCategoryId == category.Id )
+        //            throw new InvalidOperationException ( "Category cannot be its own parent." );
+
+        //        var parent = await UnitOfWork.readRepository<Category> ( )
+        //            .GetAsync ( c => c.Id == dto.ParentCategoryId );
+        //        if ( parent == null ) throw new KeyNotFoundException ( "New Parent Category not found." );
+        //    }
+
+        //    category.Name = dto.Name;
+        //    category.Description = dto.Description;
+        //    category.ParentCategoryId = dto.ParentCategoryId; // Allow updating parent
+        //    category.UpdatedDate = DateTime.Now;
+
+        //    await UnitOfWork.writeRepository<Category> ( ).UpdateAsync ( category.Id, category );
+        //    await UnitOfWork.SaveChangeAsync ( );
+        //}
         #endregion
 
         #region Delete Category (Improved Logic)
