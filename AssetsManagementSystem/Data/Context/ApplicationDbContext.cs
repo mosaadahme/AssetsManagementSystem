@@ -110,6 +110,10 @@
          public virtual DbSet<Manufacturer> Manufacturers { get; set; }
         public virtual DbSet<ReceiveMaintainedAsset> ReceiveMaintainedAsset { get; set; }
         public virtual DbSet<AuditTrail> AuditTrails { get; set; }
+
+        public virtual DbSet<InventoryAudit> InventoryAudits { get; set; }
+        public virtual DbSet<InventoryAuditDetail> InventoryAuditDetails { get; set; }
+
         #endregion
     }
 }
