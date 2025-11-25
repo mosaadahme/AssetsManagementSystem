@@ -101,5 +101,23 @@ namespace AssetsManagementSystem.Controllers
             }
         }
         #endregion
+
+        #region 3. Get Audit History (Search)
+        
+        [HttpGet ( "history" )] // URL: api/Inventory/GetAuditHistory/history?...
+        public async Task<IActionResult> GetAuditHistory ( [FromQuery] AuditSearchFilterDTO filter )
+        {
+            try
+            {
+                var history = await _inventoryService.GetAuditHistoryAsync ( filter );
+                return Ok ( history );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "Error retrieving audit history." );
+                return StatusCode ( 500, new { error = "An internal error occurred." } );
+            }
+        }
+        #endregion
     }
 }

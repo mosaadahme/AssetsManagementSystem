@@ -213,5 +213,66 @@ namespace AssetsManagementSystem.Services.Inventory
             };
         }
         #endregion
+
+
+        #region 3. Search & History
+        public async Task<IEnumerable<AuditHistoryResponseDTO>> GetAuditHistoryAsync ( AuditSearchFilterDTO filter )
+        {
+            // بناء شرط البحث (Predicate)
+            // بنقول: هات السجل لو (الفلتر فاضي OR السجل بيطابق الفلتر)
+
+            var audits = await UnitOfWork.readRepository<InventoryAudit> ( )
+                .GetAllByPagningAsync (
+                    predicate: a =>
+                        ( a.IsDeleted == false || a.IsDeleted == null ) && // شرط أساسي
+
+                        // 1. فلتر المكان
+                        ( !filter.LocationId.HasValue || a.LocationId == filter.LocationId ) &&
+
+                        // 2. فلتر التاريخ (من - إلى)
+                        ( !filter.FromDate.HasValue || a.StartDate >= filter.FromDate ) &&
+                        ( !filter.ToDate.HasValue || a.StartDate <= filter.ToDate ) &&
+
+                        // 3. فلتر الباركود (الأصعب: بحث داخل التفاصيل)
+                        // لو باعت باركود، هات الجرد اللي "أي سطر في تفاصيله" بيحتوي الباركود ده
+                        ( string.IsNullOrEmpty ( filter.AssetBarcode ) || a.AuditDetails.Any ( d => d.ScannedBarcode == filter.AssetBarcode ) ),
+
+                    // Include: بنحتاج البيانات دي للعرض
+                    include: src => src
+                        .Include ( a => a.Location )
+                        .Include ( a => a.Auditor )
+                        .Include ( a => a.AuditDetails ), // بنحتاج التفاصيل عشان نعدها
+
+                    // Pagination
+                    currentPage: filter.PageNumber,
+                    pageSize: filter.PageSize,
+
+                    // الترتيب: الأحدث أولاً
+                    orderby: q => q.OrderByDescending ( d => d.StartDate )
+                );
+
+            // Mapping to DTO
+            return audits.Select ( a => new AuditHistoryResponseDTO
+            {
+                AuditId = a.Id,
+                LocationName = a.Location?.Name ?? "Unknown",
+                AuditorName = a.Auditor != null ? $"{a.Auditor.FirstName} {a.Auditor.LastName}" : "Unknown",
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                Status = a.Status.ToString ( ),
+
+                // عدد الحاجات اللي اتعملها Scan
+                TotalScannedItems = a.AuditDetails.Count,
+
+                // علامة سريعة لو الجرد ده كان فيه مشاكل (مش كل اللي اتقرأ كان Matched)
+                // لو فيه أي سطر IsMatched == false يبقى كان فيه مشكلة
+                HasDiscrepancies = a.AuditDetails.Any ( d => !d.IsMatched )
+            } ).ToList ( );
+        }
+        #endregion
+
+
+
+
     }
 }
