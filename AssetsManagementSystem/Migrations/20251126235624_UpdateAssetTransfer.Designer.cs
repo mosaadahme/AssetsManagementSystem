@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetsManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240918213428_IntialCreation")]
-    partial class IntialCreation
+    [Migration("20251126235624_UpdateAssetTransfer")]
+    partial class UpdateAssetTransfer
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,8 +39,16 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime>("AddedOnDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("AssignedUserId")
+                    b.Property<int>("AssetType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("AssignedUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Barcode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
@@ -48,8 +56,12 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateOnly>("DepreciationDate")
+                    b.Property<DateOnly?>("DepreciationDate")
                         .HasColumnType("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
@@ -57,7 +69,10 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<int>("LocationId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ManufacturerId")
+                    b.Property<int?>("ManufacturerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MinQuantityLimit")
                         .HasColumnType("int");
 
                     b.Property<string>("ModelNumber")
@@ -76,8 +91,10 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<decimal>("PurchasePrice")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
                     b.Property<string>("SerialNumber")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -88,16 +105,15 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateOnly>("WarrantyExpiryDate")
+                    b.Property<DateOnly?>("WarrantyExpiryDate")
                         .HasColumnType("date");
-
-                    b.Property<string>("dicription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedUserId");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique();
 
                     b.HasIndex("CategoryId");
 
@@ -229,7 +245,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<int>("FromLocationId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("FromUserId")
+                    b.Property<Guid?>("FromUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool?>("IsDeleted")
@@ -249,7 +265,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<int>("ToLocationId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ToUserId")
+                    b.Property<Guid?>("ToUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -285,6 +301,38 @@ namespace AssetsManagementSystem.Migrations
                     b.ToTable("AssetsSuppliers");
                 });
 
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.AuditTrail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("AddedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditTrails");
+                });
+
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -295,6 +343,9 @@ namespace AssetsManagementSystem.Migrations
 
                     b.Property<DateTime>("AddedOnDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("AssetType")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
@@ -317,7 +368,8 @@ namespace AssetsManagementSystem.Migrations
 
                     b.Property<string>("SerialCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -408,6 +460,90 @@ namespace AssetsManagementSystem.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedOnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("AuditorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditorId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("InventoryAudits");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAuditDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedOnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InventoryAuditId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMatched")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("ScannedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ScannedBarcode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryAuditId");
+
+                    b.ToTable("InventoryAuditDetails");
+                });
+
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>
                 {
                     b.Property<int>("Id")
@@ -426,7 +562,8 @@ namespace AssetsManagementSystem.Migrations
 
                     b.Property<string>("Barcode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
@@ -443,6 +580,9 @@ namespace AssetsManagementSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique();
 
                     b.ToTable("Locations");
                 });
@@ -485,7 +625,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateOnly>("DateOfRecieve")
                         .HasColumnType("date");
 
-                    b.Property<int>("DocumentId")
+                    b.Property<int?>("DocumentId")
                         .HasColumnType("int");
 
                     b.Property<int>("NewLocationAssigned")
@@ -543,28 +683,28 @@ namespace AssetsManagementSystem.Migrations
                         new
                         {
                             Id = new Guid("fc05f613-0e97-444e-b19b-018a223a7484"),
-                            ConcurrencyStamp = "03e86803-5f32-4797-bdfd-e37cb248a509",
+                            ConcurrencyStamp = "b2e725eb-a4b5-4a24-8921-4bbad1501b72",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"),
-                            ConcurrencyStamp = "1470974e-8402-404c-9fbe-489d771bbaac",
+                            ConcurrencyStamp = "f3a52c84-2222-4a8f-aa32-1206e62d447e",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"),
-                            ConcurrencyStamp = "1878a7de-b47e-40a7-8b30-4e543bf9df08",
+                            ConcurrencyStamp = "90806a8f-f299-4a46-a649-8507884c3019",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         },
                         new
                         {
                             Id = new Guid("62474474-f91b-483d-b0d8-2742c01146f0"),
-                            ConcurrencyStamp = "14d6061f-b887-4d8a-a6a4-c0d6da21c867",
+                            ConcurrencyStamp = "c098e4f7-7d58-4117-a2b3-d72d11a0566c",
                             Name = "Auditor",
                             NormalizedName = "AUDITOR"
                         });
@@ -717,8 +857,8 @@ namespace AssetsManagementSystem.Migrations
                         {
                             Id = new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"),
                             AccessFailedCount = 0,
-                            AddedOnDate = new DateTime(2024, 9, 19, 0, 34, 28, 354, DateTimeKind.Local).AddTicks(2161),
-                            ConcurrencyStamp = "137332af-1262-477d-a963-108f3beadc28",
+                            AddedOnDate = new DateTime(2025, 11, 27, 1, 56, 23, 954, DateTimeKind.Local).AddTicks(6458),
+                            ConcurrencyStamp = "e6269cfc-6a72-4a6c-95ea-f655b3650ba0",
                             Email = "Mosaad_Ahmed@Gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Mosaad",
@@ -726,10 +866,10 @@ namespace AssetsManagementSystem.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MOSAAD_AHMED@GMAIL.COM",
                             NormalizedUserName = "MOSAAD_AHMED@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEJJ12BuMil+BPaRaU4IzvxOA8hidSYDSkW11HryL9AlQkbCnXv4U6W/9s0YdEwmiA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHuU8xOTUVVNEZM8VjCUL/nA17pq4sYmqQl5FpriPr9xuGw5dsgN/L/kZaF84LoM2A==",
                             PhoneNumber = "01551251116",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "970c002b-a789-4239-b995-b70a362cf589",
+                            SecurityStamp = "3a78c9e2-05b0-47a4-863c-9d84f96f24ea",
                             TwoFactorEnabled = false,
                             UserName = "Mosaad_Ahmed@Gmail.com",
                             UserStatus = "Active"
@@ -844,8 +984,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.User", "AssignedUser")
                         .WithMany("AssignedAssets")
                         .HasForeignKey("AssignedUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Category", "Category")
                         .WithMany()
@@ -862,8 +1001,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Manufacturer", "Manufacturer")
                         .WithMany("Assets")
                         .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("AssignedUser");
 
@@ -945,8 +1083,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.User", "FromUser")
                         .WithMany()
                         .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "ToLocation")
                         .WithMany()
@@ -957,8 +1094,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.User", "ToUser")
                         .WithMany()
                         .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Asset");
 
@@ -1030,6 +1166,36 @@ namespace AssetsManagementSystem.Migrations
                     b.Navigation("UploadedBy");
                 });
 
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.User", "Auditor")
+                        .WithMany()
+                        .HasForeignKey("AuditorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Auditor");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAuditDetail", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.InventoryAudit", "InventoryAudit")
+                        .WithMany("AuditDetails")
+                        .HasForeignKey("InventoryAuditId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("InventoryAudit");
+                });
+
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.ReceiveMaintainedAsset", b =>
                 {
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Asset", "Asset")
@@ -1041,8 +1207,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Document", "Document")
                         .WithMany()
                         .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
                         .WithMany()
@@ -1140,6 +1305,11 @@ namespace AssetsManagementSystem.Migrations
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Category", b =>
                 {
                     b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.Navigation("AuditDetails");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>

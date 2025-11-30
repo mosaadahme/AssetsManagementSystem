@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetsManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251120121858_UpdateAssetModel")]
-    partial class UpdateAssetModel
+    [Migration("20251126233916_IntialCreation")]
+    partial class IntialCreation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,7 +245,8 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<int>("FromLocationId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("FromUserId")
+                    b.Property<Guid?>("FromUserId")
+                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool?>("IsDeleted")
@@ -265,7 +266,8 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<int>("ToLocationId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ToUserId")
+                    b.Property<Guid?>("ToUserId")
+                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -343,6 +345,9 @@ namespace AssetsManagementSystem.Migrations
 
                     b.Property<DateTime>("AddedOnDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("AssetType")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
@@ -455,6 +460,90 @@ namespace AssetsManagementSystem.Migrations
                     b.HasIndex("UploadedById");
 
                     b.ToTable("Documents");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedOnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("AuditorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditorId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("InventoryAudits");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAuditDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedOnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InventoryAuditId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMatched")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("ScannedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ScannedBarcode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryAuditId");
+
+                    b.ToTable("InventoryAuditDetails");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>
@@ -596,28 +685,28 @@ namespace AssetsManagementSystem.Migrations
                         new
                         {
                             Id = new Guid("fc05f613-0e97-444e-b19b-018a223a7484"),
-                            ConcurrencyStamp = "e27ee2bb-9c0f-4019-9b60-1e7e38c2d08e",
+                            ConcurrencyStamp = "7dc47d4b-3910-456f-8239-85dd65167c02",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"),
-                            ConcurrencyStamp = "66f02e81-74a5-449f-a01e-539e56c1d17c",
+                            ConcurrencyStamp = "92583ce9-8afc-4bf8-a4f6-00301321cc51",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"),
-                            ConcurrencyStamp = "0e0ea0e9-c11f-4e6f-b1c6-3b32f2e85e86",
+                            ConcurrencyStamp = "aced1dec-090b-43e3-8afe-0a119207f5fc",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         },
                         new
                         {
                             Id = new Guid("62474474-f91b-483d-b0d8-2742c01146f0"),
-                            ConcurrencyStamp = "a12a987a-52f3-4ccf-b915-e348102be61c",
+                            ConcurrencyStamp = "628ad151-dcf5-4069-abd4-1cd1bad3babc",
                             Name = "Auditor",
                             NormalizedName = "AUDITOR"
                         });
@@ -770,8 +859,8 @@ namespace AssetsManagementSystem.Migrations
                         {
                             Id = new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"),
                             AccessFailedCount = 0,
-                            AddedOnDate = new DateTime(2025, 11, 20, 14, 18, 57, 574, DateTimeKind.Local).AddTicks(3792),
-                            ConcurrencyStamp = "ea2f4e36-138e-4cac-bc18-62dcdcdb9932",
+                            AddedOnDate = new DateTime(2025, 11, 27, 1, 39, 16, 70, DateTimeKind.Local).AddTicks(7569),
+                            ConcurrencyStamp = "9fc07e88-6706-43f8-9ac0-c0e26d8cbdfe",
                             Email = "Mosaad_Ahmed@Gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Mosaad",
@@ -779,10 +868,10 @@ namespace AssetsManagementSystem.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MOSAAD_AHMED@GMAIL.COM",
                             NormalizedUserName = "MOSAAD_AHMED@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAECM5z7PGmFC8HH3uIaLckfQEoDRbtHgL0tkYPFTURGRJCF5VGBKP8XejuRG3l/sfHQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFv7MXv+7cH9JGX+THM42UzqTMRAfJtug+UyS8Pa8hvPh9hZu8BHv1G1EqNZ3Kj4tA==",
                             PhoneNumber = "01551251116",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d0e6e513-3316-4f65-8c3c-294de5c9c94e",
+                            SecurityStamp = "eebe4310-0484-470e-9417-b9f1127b89c1",
                             TwoFactorEnabled = false,
                             UserName = "Mosaad_Ahmed@Gmail.com",
                             UserStatus = "Active"
@@ -1081,6 +1170,36 @@ namespace AssetsManagementSystem.Migrations
                     b.Navigation("UploadedBy");
                 });
 
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.User", "Auditor")
+                        .WithMany()
+                        .HasForeignKey("AuditorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Auditor");
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAuditDetail", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.InventoryAudit", "InventoryAudit")
+                        .WithMany("AuditDetails")
+                        .HasForeignKey("InventoryAuditId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("InventoryAudit");
+                });
+
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.ReceiveMaintainedAsset", b =>
                 {
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Asset", "Asset")
@@ -1190,6 +1309,11 @@ namespace AssetsManagementSystem.Migrations
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Category", b =>
                 {
                     b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.InventoryAudit", b =>
+                {
+                    b.Navigation("AuditDetails");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>

@@ -42,7 +42,7 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
 
         // Enum Validation
         [EnumDataType ( typeof ( AssetStatus ) )]
-        public AssetStatus Status { get; set; } = AssetStatus.Active;  
+        public AssetStatus Status { get; set; } = AssetStatus.Available;  
          
         [Required ( ErrorMessage = "Location is required." )]
         public int LocationId { get; set; }

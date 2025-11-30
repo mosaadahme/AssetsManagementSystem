@@ -1,7 +1,10 @@
 ﻿using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace AssetsManagementSystem.Models.Enums
 {
+    [System.Text.Json.Serialization.JsonConverter ( typeof ( JsonStringEnumConverter ) )]
+
     public enum AssetType
     {
         [EnumMember(Value = "IT")]

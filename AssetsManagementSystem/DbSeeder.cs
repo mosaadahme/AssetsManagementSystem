@@ -10,7 +10,7 @@ namespace AssetsManagementSystem
             var roleManager = serviceProvider.GetRequiredService<RoleManager<Role>> ( );
             var userManager = serviceProvider.GetRequiredService<UserManager<User>> ( );
 
-            await context.Database.MigrateAsync ( );
+            //await context.Database.MigrateAsync ( );
 
 
 

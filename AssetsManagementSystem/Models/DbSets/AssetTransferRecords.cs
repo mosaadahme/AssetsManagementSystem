@@ -9,16 +9,16 @@
 
 
         [ForeignKey("FromUser")]
-        [Required(ErrorMessage = "From User ID is required.")]
-        public Guid FromUserId { get; set; }  
-        public virtual User FromUser { get; set; }
+        //[Required(ErrorMessage = "From User ID is required.")]
+        public Guid ?FromUserId { get; set; }  
+        public virtual User? FromUser { get; set; }
 
 
         [ForeignKey("ToUser")]
-        [Required(ErrorMessage = "To User ID is required.")]
+        //[Required(ErrorMessage = "To User ID is required.")]
 
-        public Guid ToUserId { get; set; }   
-        public virtual User ToUser { get; set; }
+        public Guid? ToUserId { get; set; }   
+        public virtual User? ToUser { get; set; }
 
 
         [ForeignKey("FromLocation")]

@@ -27,7 +27,7 @@ namespace AssetsManagementSystem.Services.ReceiveMaintainedAsset
             #region Asset
             Asset asset = await UnitOfWork.readRepository<Asset>().GetAsync(predicate:
                                             a => a.SerialNumber == addReceiveMaintainedAsset.AssetSerialNumber &&
-                                            a.Status == AssetStatus.InRepair.ToString() &&
+                                            a.Status == AssetStatus.Available.ToString() &&
                                             (a.IsDeleted == null || a.IsDeleted == false)
                                             );
 
@@ -98,7 +98,7 @@ namespace AssetsManagementSystem.Services.ReceiveMaintainedAsset
                 await UnitOfWork.writeRepository<Models.DbSets.ReceiveMaintainedAsset>().AddAsync(receiveMaintainedAsset);
                 asset.LocationId = addReceiveMaintainedAsset.NewLocationAssignedId;
                 asset.AssignedUserId = addReceiveMaintainedAsset.NewUserAssignedId;
-                asset.Status=AssetStatus.Active.ToString();
+                asset.Status=AssetStatus.Available.ToString();
                 await UnitOfWork.writeRepository<Asset>().UpdateAsync(asset.Id, asset);
 
                 await UnitOfWork.CommitTransactionAsync();

@@ -31,7 +31,7 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         public DateOnly WarrantyExpiryDate { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        [DefaultValue(AssetStatus.Active)]
+        [DefaultValue(AssetStatus.Available)]
         public AssetStatus Status { get; set; }
 
 

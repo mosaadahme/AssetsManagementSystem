@@ -6,6 +6,8 @@
         public int AssetId { get; set; }
         public string AssetName { get; set; }   
 
+        public string AssetBarcode { get; set; }
+
         public Guid FromUserId { get; set; }
         public string FromUserName { get; set; }  
 

@@ -43,7 +43,7 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [Required ( ErrorMessage = "Location is required." )]
         public int LocationId { get; set; }
 
-        // Nullable: عشان لو عايز "تسحب" الأصل من الموظف وترجعه المخزن، تبعت null
+        //// Nullable: عشان لو عايز "تسحب" الأصل من الموظف وترجعه المخزن، تبعت null
         public Guid? AssignedUserId { get; set; }
 
         [Required ( ErrorMessage = "Category is required." )]

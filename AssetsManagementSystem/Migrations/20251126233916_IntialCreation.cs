@@ -62,6 +62,23 @@ namespace AssetsManagementSystem.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditTrails",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EntityType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EntityName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AddedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditTrails", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -69,7 +86,8 @@ namespace AssetsManagementSystem.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    SerialCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SerialCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    AssetType = table.Column<int>(type: "int", nullable: false),
                     ParentCategoryId = table.Column<int>(type: "int", nullable: true),
                     AddedOnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -92,7 +110,7 @@ namespace AssetsManagementSystem.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Barcode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Barcode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Address = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     AddedOnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -264,24 +282,59 @@ namespace AssetsManagementSystem.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "InventoryAudits",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LocationId = table.Column<int>(type: "int", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    AuditorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AddedOnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InventoryAudits", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InventoryAudits_AspNetUsers_AuditorId",
+                        column: x => x.AuditorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_InventoryAudits_Locations_LocationId",
+                        column: x => x.LocationId,
+                        principalTable: "Locations",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Assets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Barcode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AssetType = table.Column<int>(type: "int", nullable: false),
                     ModelNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     PurchaseDate = table.Column<DateOnly>(type: "date", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    WarrantyExpiryDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    DepreciationDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    WarrantyExpiryDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    DepreciationDate = table.Column<DateOnly>(type: "date", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    dicription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     LocationId = table.Column<int>(type: "int", nullable: false),
-                    AssignedUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AssignedUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
-                    ManufacturerId = table.Column<int>(type: "int", nullable: false),
+                    ManufacturerId = table.Column<int>(type: "int", nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    MinQuantityLimit = table.Column<int>(type: "int", nullable: true),
                     AddedOnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -309,6 +362,31 @@ namespace AssetsManagementSystem.Migrations
                         name: "FK_Assets_Manufacturers_ManufacturerId",
                         column: x => x.ManufacturerId,
                         principalTable: "Manufacturers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InventoryAuditDetails",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    InventoryAuditId = table.Column<int>(type: "int", nullable: false),
+                    ScannedBarcode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ScannedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsMatched = table.Column<bool>(type: "bit", nullable: false),
+                    AddedOnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InventoryAuditDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InventoryAuditDetails_InventoryAudits_InventoryAuditId",
+                        column: x => x.InventoryAuditId,
+                        principalTable: "InventoryAudits",
                         principalColumn: "Id");
                 });
 
@@ -497,7 +575,7 @@ namespace AssetsManagementSystem.Migrations
                     UserRecieveDevFromSupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     NewUserAssignedId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     NewLocationAssigned = table.Column<int>(type: "int", nullable: false),
-                    DocumentId = table.Column<int>(type: "int", nullable: false)
+                    DocumentId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -534,16 +612,16 @@ namespace AssetsManagementSystem.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { new Guid("62474474-f91b-483d-b0d8-2742c01146f0"), "14d6061f-b887-4d8a-a6a4-c0d6da21c867", "Auditor", "AUDITOR" },
-                    { new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"), "1470974e-8402-404c-9fbe-489d771bbaac", "User", "USER" },
-                    { new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"), "1878a7de-b47e-40a7-8b30-4e543bf9df08", "Manager", "MANAGER" },
-                    { new Guid("fc05f613-0e97-444e-b19b-018a223a7484"), "03e86803-5f32-4797-bdfd-e37cb248a509", "Admin", "ADMIN" }
+                    { new Guid("62474474-f91b-483d-b0d8-2742c01146f0"), "628ad151-dcf5-4069-abd4-1cd1bad3babc", "Auditor", "AUDITOR" },
+                    { new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"), "92583ce9-8afc-4bf8-a4f6-00301321cc51", "User", "USER" },
+                    { new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"), "aced1dec-090b-43e3-8afe-0a119207f5fc", "Manager", "MANAGER" },
+                    { new Guid("fc05f613-0e97-444e-b19b-018a223a7484"), "7dc47d4b-3910-456f-8239-85dd65167c02", "Admin", "ADMIN" }
                 });
 
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "AddedOnDate", "ConcurrencyStamp", "DeletedDate", "Email", "EmailConfirmed", "FirstName", "IsDeleted", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "SecurityStamp", "TwoFactorEnabled", "UpdatedDate", "UserName", "UserStatus" },
-                values: new object[] { new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"), 0, new DateTime(2024, 9, 19, 0, 34, 28, 354, DateTimeKind.Local).AddTicks(2161), "137332af-1262-477d-a963-108f3beadc28", null, "Mosaad_Ahmed@Gmail.com", false, "Mosaad", null, "Ahmed", false, null, "MOSAAD_AHMED@GMAIL.COM", "MOSAAD_AHMED@GMAIL.COM", "AQAAAAIAAYagAAAAEEJJ12BuMil+BPaRaU4IzvxOA8hidSYDSkW11HryL9AlQkbCnXv4U6W/9s0YdEwmiA==", "01551251116", false, null, null, "970c002b-a789-4239-b995-b70a362cf589", false, null, "Mosaad_Ahmed@Gmail.com", "Active" });
+                values: new object[] { new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"), 0, new DateTime(2025, 11, 27, 1, 39, 16, 70, DateTimeKind.Local).AddTicks(7569), "9fc07e88-6706-43f8-9ac0-c0e26d8cbdfe", null, "Mosaad_Ahmed@Gmail.com", false, "Mosaad", null, "Ahmed", false, null, "MOSAAD_AHMED@GMAIL.COM", "MOSAAD_AHMED@GMAIL.COM", "AQAAAAIAAYagAAAAEFv7MXv+7cH9JGX+THM42UzqTMRAfJtug+UyS8Pa8hvPh9hZu8BHv1G1EqNZ3Kj4tA==", "01551251116", false, null, null, "eebe4310-0484-470e-9417-b9f1127b89c1", false, null, "Mosaad_Ahmed@Gmail.com", "Active" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -620,6 +698,12 @@ namespace AssetsManagementSystem.Migrations
                 column: "AssignedUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Assets_Barcode",
+                table: "Assets",
+                column: "Barcode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Assets_CategoryId",
                 table: "Assets",
                 column: "CategoryId");
@@ -685,6 +769,27 @@ namespace AssetsManagementSystem.Migrations
                 column: "UploadedById");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InventoryAuditDetails_InventoryAuditId",
+                table: "InventoryAuditDetails",
+                column: "InventoryAuditId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InventoryAudits_AuditorId",
+                table: "InventoryAudits",
+                column: "AuditorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_InventoryAudits_LocationId",
+                table: "InventoryAudits",
+                column: "LocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Locations_Barcode",
+                table: "Locations",
+                column: "Barcode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReceiveMaintainedAsset_AssetId",
                 table: "ReceiveMaintainedAsset",
                 column: "AssetId");
@@ -741,7 +846,13 @@ namespace AssetsManagementSystem.Migrations
                 name: "AssetTransferRecords");
 
             migrationBuilder.DropTable(
+                name: "AuditTrails");
+
+            migrationBuilder.DropTable(
                 name: "DataConsistencyChecks");
+
+            migrationBuilder.DropTable(
+                name: "InventoryAuditDetails");
 
             migrationBuilder.DropTable(
                 name: "ReceiveMaintainedAsset");
@@ -751,6 +862,9 @@ namespace AssetsManagementSystem.Migrations
 
             migrationBuilder.DropTable(
                 name: "Suppliers");
+
+            migrationBuilder.DropTable(
+                name: "InventoryAudits");
 
             migrationBuilder.DropTable(
                 name: "Documents");
