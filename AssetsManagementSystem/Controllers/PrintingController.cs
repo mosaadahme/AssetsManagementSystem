@@ -15,46 +15,45 @@ namespace AssetsManagementSystem.Controllers
             _printingService = printingService;
         }
 
-        //[HttpPost]
-        //public IActionResult PrintLabels ( [FromBody] List<string> barcodes )
-        //{
-        //    if ( barcodes == null || !barcodes.Any ( ) )
-        //        return BadRequest ( "No barcodes provided." );
-
-        //    try
-        //    {
-        //        // 1. Generate PDF Bytes
-        //        var pdfBytes = _printingService.GenerateBarcodeLabelsPdf ( barcodes );
-
-        //        // 2. Return File to Browser
-        //        string fileName = $"Barcodes_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-
-        //        // بنرجع الملف عشان المتصفح يفتحه أو يحمله
-        //        return File ( pdfBytes, "application/pdf", fileName );
-        //    }
-        //    catch ( Exception ex )
-        //    {
-        //        // لو حصل أي خطأ في الرسم نرجعه
-        //        return StatusCode ( 500, new { error = $"Error generating PDF: {ex.Message}" } );
-        //    }
-        //}
-
+        // 1. طباعة A4 (ثابتة)
         [HttpPost]
-        public IActionResult PrintLabels ( [FromBody] PrintRequestDTO request )
+        public IActionResult PrintA4 ( [FromBody] List<string> barcodes )
         {
-            if ( request.Barcodes == null || !request.Barcodes.Any ( ) )
+            if ( barcodes == null || !barcodes.Any ( ) )
                 return BadRequest ( "No barcodes provided." );
 
             try
             {
-                // نمرر المقاسات للسيرفيس
-                var pdfBytes = _printingService.GenerateBarcodeLabelsPdf (
+                var pdfBytes = _printingService.GenerateA4Pdf ( barcodes );
+                return File ( pdfBytes, "application/pdf", $"A4_Labels_{DateTime.Now:HHmm}.pdf" );
+            }
+            catch ( Exception ex )
+            {
+                return StatusCode ( 500, new { error = ex.Message } );
+            }
+        }
+
+        // 2. طباعة حرارية (ديناميكية - 5*5 أو 6*2.5)
+        [HttpPost]
+        public IActionResult PrintThermal ( [FromBody] PrintRequestDTO request )
+        {
+            if ( request.Barcodes == null || !request.Barcodes.Any ( ) )
+                return BadRequest ( "No barcodes provided." );
+
+            // Validation بسيط للمقاسات
+            if ( request.WidthCm <= 0 || request.HeightCm <= 0 )
+                return BadRequest ( "Width and Height must be greater than 0." );
+
+            try
+            {
+                // هنا السحر: بنبعت المقاسات للسيرفيس
+                var pdfBytes = _printingService.GenerateDynamicPdf (
                     request.Barcodes,
                     request.WidthCm,
                     request.HeightCm
                 );
 
-                string fileName = $"Labels_{request.WidthCm}x{request.HeightCm}_{DateTime.Now:HHmm}.pdf";
+                string fileName = $"Thermal_{request.WidthCm}x{request.HeightCm}_{DateTime.Now:HHmm}.pdf";
                 return File ( pdfBytes, "application/pdf", fileName );
             }
             catch ( Exception ex )
