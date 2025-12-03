@@ -89,8 +89,24 @@ namespace AssetsManagementSystem
 
             var app = builder.Build();
 
+            using ( var scope = app.Services.CreateScope ( ) )
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    // ?????? ??? ??????? ????????? ???? ??? ??????
+                    await AssetsManagementSystem.DbSeeder.SeedAsync ( services );
+                }
+                catch ( Exception ex )
+                {
+                    // ?? ??? ????? ???? ????? Seed ??????? ?? ?????? ???? ???? ?????
+                    var logger = services.GetRequiredService<ILogger<Program>> ( );
+                    logger.LogError ( ex, "An error occurred while seeding the database." );
+                }
+            }
+
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+            if ( app.Environment.IsDevelopment() || app.Environment.IsProduction())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
