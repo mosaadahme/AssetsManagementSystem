@@ -32,6 +32,10 @@ namespace AssetsManagementSystem.Services.Suppliers
              var supplier = Mapper.Map<Supplier,AddSupplierRequestDTO>(addSupplierRequest);
 
              supplier.AddedOnDate = DateTime.Now;
+            supplier.Address= addSupplierRequest.Address;
+            supplier.PhoneNumber= addSupplierRequest.PhoneNumber;
+            supplier.CompanyName= addSupplierRequest.CompanyName;
+            supplier.email = addSupplierRequest.email;
              
             await UnitOfWork.writeRepository<Supplier>().AddAsync(supplier);
 

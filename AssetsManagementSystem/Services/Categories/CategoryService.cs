@@ -107,6 +107,11 @@ namespace AssetsManagementSystem.Services.Categories
             // تحويل البيانات الأساسية (الاسم، الوصف، الكود)
             var category = Mapper.Map<Category> ( dto );
             category.AddedOnDate = DateTime.Now;
+            category.SerialCode= dto.SerialCode;
+            category.Name = dto.Name;
+            category.Description = dto.Description;
+            category.ParentCategoryId = dto.ParentCategoryId;
+            category.AssetType = dto.AssetType ?? AssetType.IT;
 
             // -------------------------------------------------------
             // 🔥 اللوجيك الجديد: تحديد النوع (AssetType) والأب
