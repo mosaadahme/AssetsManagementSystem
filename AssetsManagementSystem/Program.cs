@@ -39,7 +39,7 @@ namespace AssetsManagementSystem
 
             builder.Services.AddSwaggerGen();
 
-            //builder.Services.AddScoped<ReportService> ( );
+            builder.Services.AddScoped<ReportService> ( );
             // ...
             builder.Services.AddScoped<AssetsManagementSystem.Services.Printing.PrintingService> ( );
             // ...
