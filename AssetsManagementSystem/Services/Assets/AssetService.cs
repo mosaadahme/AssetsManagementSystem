@@ -1664,12 +1664,12 @@ namespace AssetsManagementSystem.Services.Assets
                 if ( user == null ) throw new KeyNotFoundException ( $"User ID {userId} not found" );
             }
 
-            if ( supIds != null && supIds.Any ( ) )
-            {
-                var distinctIds = supIds.Distinct ( ).ToList ( );
-                var count = await UnitOfWork.readRepository<Supplier> ( ).CountAsync ( s => distinctIds.Contains ( s.Id ) && ( s.IsDeleted == false || s.IsDeleted == null ) );
-                if ( count != distinctIds.Count ) throw new KeyNotFoundException ( "One or more Supplier IDs invalid." );
-            }
+            //if ( supIds != null && supIds.Any ( ) )
+            //{
+            //    var distinctIds = supIds.Distinct ( ).ToList ( );
+            //    var count = await UnitOfWork.readRepository<Supplier> ( ).CountAsync ( s => distinctIds.Contains ( s.Id ) && ( s.IsDeleted == false || s.IsDeleted == null ) );
+            //    if ( count != distinctIds.Count ) throw new KeyNotFoundException ( "One or more Supplier IDs invalid." );
+            //}
         }
 
         private async Task AddOrUpdateAssetSuppliers ( int assetId, ICollection<int> supplierIds )
