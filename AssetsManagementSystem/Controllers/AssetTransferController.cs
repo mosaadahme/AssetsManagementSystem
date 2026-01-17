@@ -288,27 +288,61 @@ namespace AssetsManagementSystem.Controllers
         }
         #endregion
 
-        [HttpPost ( "bulk-move-to-location" )]
-        // [Authorize(Roles = "Admin,StoreKeeper")] // يفضل تفعيل الصلاحيات
-        public async Task<IActionResult> BulkMoveAssets ( [FromBody] BulkMoveToLocationDTO dto )
+        //[HttpPost ( "bulk-move-to-location" )]
+        //// [Authorize(Roles = "Admin,StoreKeeper")] // يفضل تفعيل الصلاحيات
+        //public async Task<IActionResult> BulkMoveAssets ( [FromBody] BulkMoveToLocationDTO dto )
+        //{
+        //    if ( !ModelState.IsValid )
+        //        return BadRequest ( ModelState );
+
+        //    try
+        //    {
+        //        // بنجيب الـ ID بتاع اليوزر اللي عامل لوجين حالياً (عشان الأمان)
+        //        // Guid userId = Guid.Parse(User.FindFirst("uid")?.Value); 
+        //        Guid userId = Guid.Empty; // مؤقتاً لحد ما تظبط الـ JWT
+
+        //        int count = await _transferService.BulkMoveAssetsToLocationAsync ( dto, userId );
+
+        //        return Ok ( new
+        //        {
+        //            success = true,
+        //            message = $"Successfully moved {count} assets to location '{dto.TargetLocationBarcode}'.",
+        //            movedCount = count
+        //        } );
+        //    }
+        //    catch ( KeyNotFoundException ex )
+        //    {
+        //        return NotFound ( new { success = false, message = ex.Message } );
+        //    }
+        //    catch ( Exception ex )
+        //    {
+        //        return StatusCode ( 500, new { success = false, message = ex.Message } );
+        //    }
+        //}
+
+        [HttpPost ( "bulk-move-multiple" )]
+        public async Task<IActionResult> BulkMoveAssetsMultiple ( [FromBody] BulkMoveRequestDTO dto )
         {
             if ( !ModelState.IsValid )
                 return BadRequest ( ModelState );
 
             try
             {
-                // بنجيب الـ ID بتاع اليوزر اللي عامل لوجين حالياً (عشان الأمان)
-                // Guid userId = Guid.Parse(User.FindFirst("uid")?.Value); 
-                Guid userId = Guid.Empty; // مؤقتاً لحد ما تظبط الـ JWT
+                // Guid userId = ... (هات اليوزر من التوكن)
+                Guid userId = Guid.Empty;
 
-                int count = await _transferService.BulkMoveAssetsToLocationAsync ( dto, userId );
+                int count = await _transferService.BulkMoveAssetsToMultipleLocationsAsync ( dto, userId );
 
                 return Ok ( new
                 {
                     success = true,
-                    message = $"Successfully moved {count} assets to location '{dto.TargetLocationBarcode}'.",
+                    message = $"Successfully moved {count} assets across {dto.Assignments.Count} locations.",
                     movedCount = count
                 } );
+            }
+            catch ( InvalidOperationException ex )
+            {
+                return BadRequest ( new { success = false, message = ex.Message } );
             }
             catch ( KeyNotFoundException ex )
             {
