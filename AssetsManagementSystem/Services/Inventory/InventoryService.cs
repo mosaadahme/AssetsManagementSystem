@@ -14,26 +14,62 @@ namespace AssetsManagementSystem.Services.Inventory
         {
         }
 
+        //#region 1. Start Audit Session
+        //public async Task<int> StartAuditAsync ( StartAuditRequestDTO dto, Guid auditorId )
+        //{
+        //    // 1. التأكد من وجود المكان
+        //    var location = await UnitOfWork.readRepository<Location> ( )
+        //        .GetAsync ( l => l.Id == dto.LocationId && ( l.IsDeleted == false || l.IsDeleted == null ) );
+
+        //    if ( location == null ) throw new KeyNotFoundException ( "Location not found." );
+
+        //    // 2. التأكد من عدم وجود جلسة مفتوحة لنفس المكان (لتجنب التداخل)
+        //    var pendingAudit = await UnitOfWork.readRepository<InventoryAudit> ( )
+        //        .GetAsync ( a => a.LocationId == dto.LocationId && a.Status == InventoryAuditStatus.Pending );
+
+        //    if ( pendingAudit != null )
+        //        throw new InvalidOperationException ( $"There is already a pending audit session (ID: {pendingAudit.Id}) for this location." );
+
+        //    // 3. إنشاء الجلسة
+        //    var audit = new InventoryAudit
+        //    {
+        //        LocationId = dto.LocationId,
+        //        AuditorId = auditorId,
+        //        StartDate = DateTime.Now,
+        //        Status = InventoryAuditStatus.Pending,
+        //        AddedOnDate = DateTime.Now
+        //    };
+
+        //    await UnitOfWork.writeRepository<InventoryAudit> ( ).AddAsync ( audit );
+        //    await UnitOfWork.SaveChangeAsync ( );
+
+        //    return audit.Id;
+        //}
+        //#endregion
+
         #region 1. Start Audit Session
         public async Task<int> StartAuditAsync ( StartAuditRequestDTO dto, Guid auditorId )
         {
-            // 1. التأكد من وجود المكان
+            // 1. التعديل: البحث باستخدام الباركود بدلاً من الـ ID
+            // dto.LocationId شايلة الباركود اللي جاي من الموبايل
             var location = await UnitOfWork.readRepository<Location> ( )
-                .GetAsync ( l => l.Id == dto.LocationId && ( l.IsDeleted == false || l.IsDeleted == null ) );
+                .GetAsync ( l => l.Barcode == dto.LocationId && ( l.IsDeleted == false || l.IsDeleted == null ) );
 
-            if ( location == null ) throw new KeyNotFoundException ( "Location not found." );
+            if ( location == null )
+                throw new KeyNotFoundException ( $"Location with Barcode '{dto.LocationId}' not found." );
 
-            // 2. التأكد من عدم وجود جلسة مفتوحة لنفس المكان (لتجنب التداخل)
+            // 2. التأكد من عدم وجود جلسة مفتوحة
+            // ملحوظة مهمة: هنا بنستخدم location.Id اللي جبناه من الداتابيز، مش dto.LocationId
             var pendingAudit = await UnitOfWork.readRepository<InventoryAudit> ( )
-                .GetAsync ( a => a.LocationId == dto.LocationId && a.Status == InventoryAuditStatus.Pending );
+                .GetAsync ( a => a.LocationId == location.Id && a.Status == InventoryAuditStatus.Pending );
 
             if ( pendingAudit != null )
-                throw new InvalidOperationException ( $"There is already a pending audit session (ID: {pendingAudit.Id}) for this location." );
+                throw new InvalidOperationException ( $"There is already a pending audit session (ID: {pendingAudit.Id}) for location '{location.Name}'." );
 
             // 3. إنشاء الجلسة
             var audit = new InventoryAudit
             {
-                LocationId = dto.LocationId,
+                LocationId = location.Id, // بنخزن الـ ID الحقيقي للعلاقة
                 AuditorId = auditorId,
                 StartDate = DateTime.Now,
                 Status = InventoryAuditStatus.Pending,

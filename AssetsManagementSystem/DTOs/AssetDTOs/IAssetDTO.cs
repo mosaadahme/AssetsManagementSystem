@@ -36,8 +36,7 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
 
 
 
-        [Required(ErrorMessage = "Location is required.")]
-        public int LocationId { get; set; }
+         public int? LocationId { get; set; }
 
 
 

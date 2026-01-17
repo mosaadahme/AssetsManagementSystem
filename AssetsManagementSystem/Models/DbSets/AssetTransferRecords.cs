@@ -24,8 +24,8 @@
         [ForeignKey("FromLocation")]
         [Required(ErrorMessage = "From Location ID is required.")]
 
-        public int FromLocationId { get; set; }    
-        public virtual Location FromLocation { get; set; }
+        public int? FromLocationId { get; set; }    
+        public virtual Location? FromLocation { get; set; }
 
 
         [ForeignKey("ToLocation")]

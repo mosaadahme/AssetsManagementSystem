@@ -132,10 +132,9 @@
         public string? Description { get; set; }
 
         // Relationships
-        [Required ( ErrorMessage = "Location is required." )]
-        [ForeignKey ( "Location" )]
-        public int LocationId { get; set; }
-        public virtual Location Location { get; set; }
+         [ForeignKey ( "Location" )]
+        public int? LocationId { get; set; }
+        public virtual Location? Location { get; set; }
 
         [ForeignKey ( "AssignedUser" )]
         public Guid? AssignedUserId { get; set; }

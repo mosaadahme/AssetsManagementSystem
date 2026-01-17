@@ -266,7 +266,7 @@ namespace AssetsManagementSystem.Services.Report
                 DepreciationDate = a.DepreciationDate,
                 Status = a.Status,
 
-                LocationId = a.LocationId,
+                LocationId = a.LocationId??0,
                 LocationName = a.Location?.Name ?? "Unknown",
                 LocationBarcode = a.Location?.Barcode ?? "",
 

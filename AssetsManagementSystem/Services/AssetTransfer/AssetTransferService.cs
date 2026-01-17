@@ -41,7 +41,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromUserId = null, // جاي من المخزن
                 ToUserId = toUserId,
                 FromLocationId = asset.LocationId,
-                ToLocationId = asset.LocationId, // المكان ثابت (أو ممكن يتغير لو الموظف في مكان تاني)
+                ToLocationId = asset.LocationId??0, // المكان ثابت (أو ممكن يتغير لو الموظف في مكان تاني)
                 Status = TransferStatus.Approved.ToString ( ), // موافقة فورية
                 ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
                 AddedOnDate = DateTime.Now,
@@ -91,7 +91,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromUserId = previousOwnerId,
                 ToUserId = null, // راجع للمخزن
                 FromLocationId = asset.LocationId,
-                ToLocationId = asset.LocationId,
+                ToLocationId = asset.LocationId??0,
                 Status = TransferStatus.Approved.ToString ( ),
                 ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
                 AddedOnDate = DateTime.Now,
@@ -151,7 +151,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromUserId = dto.FromUserId,
                 ToUserId = dto.ToUserId,
                 FromLocationId = asset.LocationId,
-                ToLocationId = asset.LocationId,
+                ToLocationId = asset.LocationId ?? 0,
                 Status = TransferStatus.Pending.ToString ( ), 
                 AddedOnDate = DateTime.Now,
                 IsUserTransfer = true
@@ -475,6 +475,83 @@ namespace AssetsManagementSystem.Services.AssetTransfer
             }
         }
         #endregion
+        #endregion
+
+
+        #region 7. Bulk Move Assets to One Location (Direct Move)
+        public async Task<int> BulkMoveAssetsToLocationAsync ( BulkMoveToLocationDTO dto, Guid processedByUserId )
+        {
+            // 1. التأكد من وجود المكان الهدف
+            var targetLocation = await UnitOfWork.readRepository<Location> ( )
+                .GetAsync ( l => l.Barcode == dto.TargetLocationBarcode && ( l.IsDeleted == false || l.IsDeleted == null ) );
+
+            if ( targetLocation == null )
+                throw new KeyNotFoundException ( $"Target Location with barcode '{dto.TargetLocationBarcode}' not found." );
+
+            // 2. جلب الأصول من الداتابيز
+            // بنستخدم Distinct عشان لو الموظف ضرب نفس الباركود مرتين بالغلط
+            var uniqueBarcodes = dto.AssetBarcodes.Distinct ( ).ToList ( );
+
+            var assets = await UnitOfWork.readRepository<Asset> ( )
+                .GetAllAsync ( a => uniqueBarcodes.Contains ( a.Barcode ) && ( a.IsDeleted == false || a.IsDeleted == null ) );
+
+            if ( assets.Count ( ) != uniqueBarcodes.Count )
+            {
+                // اختياري: ممكن تطلعله إيه اللي ناقص بالظبط
+                throw new KeyNotFoundException ( "Some scanned assets do not exist in the system." );
+            }
+
+            // 3. التنفيذ داخل Transaction
+            int movedCount = 0;
+            await UnitOfWork.BeginTransactionAsync ( );
+            try
+            {
+                foreach ( var asset in assets )
+                {
+                    // لو الأصل أصلاً في نفس المكان، ملوش لزمة ننقله ونعمل هيستوري
+                    if ( asset.LocationId == targetLocation.Id )
+                        continue;
+
+                    // حفظ المكان القديم للسجل
+                    int? oldLocationId = asset.LocationId;
+
+                    // تحديث المكان الجديد
+                    asset.LocationId = targetLocation.Id;
+                    asset.UpdatedDate = DateTime.Now;
+
+                    // تسجيل الحركة (Audit Trail)
+                    var transferRecord = new AssetTransferRecords
+                    {
+                        AssetId = asset.Id,
+                        FromLocationId = oldLocationId,
+                        ToLocationId = targetLocation.Id,
+                        FromUserId = asset.AssignedUserId, // الموظف المسؤول عنه (لو فيه)
+                        ToUserId = asset.AssignedUserId ?? Guid.Empty, // بيفضل مع نفس الموظف، بس المكان اتغير
+                        Status = "Moved", // حالة تعبر عن النقل المباشر
+                        AddedOnDate = DateTime.Now,
+                        ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
+                        IsUserTransfer = false,
+                        // ممكن نسجل مين الـ Admin اللي عمل الحركة دي لو عندك في الداتابيز
+                        // CreatedByUserId = processedByUserId 
+                    };
+
+                    await UnitOfWork.writeRepository<AssetTransferRecords> ( ).AddAsync ( transferRecord );
+                    await UnitOfWork.writeRepository<Asset> ( ).UpdateAsync ( asset.Id, asset );
+
+                    movedCount++;
+                }
+
+                await UnitOfWork.SaveChangeAsync ( );
+                await UnitOfWork.CommitTransactionAsync ( );
+
+                return movedCount; // بنرجع عدد الحاجات اللي اتنقلت فعلاً
+            }
+            catch
+            {
+                await UnitOfWork.RollbackTransactionAsync ( );
+                throw;
+            }
+        }
         #endregion
     }
 }

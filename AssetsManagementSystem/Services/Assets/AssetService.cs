@@ -1628,7 +1628,7 @@ namespace AssetsManagementSystem.Services.Assets
                 Status = a.Status,
                 Description = a.Description,
                 LocationName = a.Location?.Name ?? "Unknown",
-                LocationId = a.LocationId,
+                LocationId = a.LocationId ?? 0,
                 LocationBarcode = a.Location?.Barcode ?? "",
                 AssignedUserName = a.AssignedUser != null ? $"{a.AssignedUser.FirstName} {a.AssignedUser.LastName}" : "In Stock",
                 AssignedUserId = a.AssignedUserId,
