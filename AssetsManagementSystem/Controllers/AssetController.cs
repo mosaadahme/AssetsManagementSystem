@@ -88,14 +88,14 @@ namespace AssetsManagementSystem.Controllers
         // لو مبعتش بارامترز هياخد الديفولت
         [HttpGet]
         // [Authorize(Roles = "Admin,Manager,Auditor")]
-        public async Task<IActionResult> GetAllAssets ( [FromQuery] int page = 1, [FromQuery] int pageSize = 10 )
+        public async Task<IActionResult> GetAllAssets ( )
         {
             try
             {
-                _logger.LogInformation ( "Fetching assets (Page: {Page}, Size: {Size})", page, pageSize );
+                _logger.LogInformation ( "Fetching assets (Page: {Page}, Size: {Size})" );
 
                 // هنا ممكن تنادي GetAllByPaginationAssetsAsync علطول
-                var result = await _assetService.GetAllByPaginationAssetsAsync ( page, pageSize );
+                var result = await _assetService.GetAllByPaginationAssetsAsync ( 1, 1000000 );
                 return Ok ( result );
             }
             catch ( Exception ex )

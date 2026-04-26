@@ -100,22 +100,22 @@
         [Required]
         public AssetType AssetType { get; set; } // IT, NonIT, Consumable
 
-        [Required ( ErrorMessage = "Model number is required." )]
+        //[Required ( ErrorMessage = "Model number is required." )]
         [MaxLength ( 50, ErrorMessage = "Model number cannot exceed 50 characters." )]
-        public string ModelNumber { get; set; }
+        public string? ModelNumber { get; set; }
 
         // Nullable: عشان يقبل Null في حالة الـ Consumables والـ Non-IT
         [MaxLength ( 100, ErrorMessage = "Serial number cannot exceed 100 characters." )]
         public string? SerialNumber { get; set; }
 
-        [Required ( ErrorMessage = "Purchase date is required." )]
+        //[Required ( ErrorMessage = "Purchase date is required." )]
         [DataType ( DataType.Date )]
         [PastOrPresentDate ( ErrorMessage = "Purchase date cannot be in the future." )]
-        public DateOnly PurchaseDate { get; set; }
+        public DateOnly ?PurchaseDate { get; set; }
 
-        [Required ( ErrorMessage = "Purchase price is required." )]
+        //[Required ( ErrorMessage = "Purchase price is required." )]
         [Range ( 0, double.MaxValue, ErrorMessage = "Purchase price must be a positive value." )]
-        public decimal PurchasePrice { get; set; }
+        public decimal? PurchasePrice { get; set; }
 
         [DataType ( DataType.Date )]
         [FutureDate ( "PurchaseDate", ErrorMessage = "Warranty expiry date must be after the purchase date." )]
@@ -124,8 +124,8 @@
         [DataType ( DataType.Date )]
         public DateOnly? DepreciationDate { get; set; }
 
-        [Required ( ErrorMessage = "Asset status is required." )]
-        public string Status { get; set; }
+        //[Required ( ErrorMessage = "Asset status is required." )]
+        public string ?Status { get; set; }
 
         // --- تم التصحيح هنا ---
         [MaxLength ( 1000, ErrorMessage = "Description cannot exceed 1000 characters." )]
@@ -150,7 +150,7 @@
         public virtual Manufacturer? Manufacturer { get; set; }
 
         // Collections
-        public virtual ICollection<AssetsSuppliers> AssetsSuppliers { get; set; }
+        public virtual ICollection<AssetsSuppliers>? AssetsSuppliers { get; set; }
         public virtual ICollection<Document> Documents { get; set; }
         public virtual ICollection<AssetDisposalRecord> AssetDisposalRecords { set; get; }
         public virtual ICollection<AssetMaintenanceRecords> AssetMaintenanceRecords { set; get; }

@@ -8,7 +8,7 @@ namespace AssetsManagementSystem.Controllers
 {
     [Route ( "api/[controller]/[action]" )]
     [ApiController]
-    [Authorize] 
+    //[Authorize] 
     public class AssetTransferController : ControllerBase
     {
         private readonly AssetTransferService _transferService;
@@ -21,7 +21,7 @@ namespace AssetsManagementSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize ( Roles = "Admin,Manager" )]
+        //[Authorize ( Roles = "Admin,Manager" )]
         public async Task<IActionResult> BulkRelocateAssets ( [FromBody] BulkRelocationRequestDTO dto ) 
         {
             try

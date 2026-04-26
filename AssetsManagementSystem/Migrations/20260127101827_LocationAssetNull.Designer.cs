@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetsManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251126235624_UpdateAssetTransfer")]
-    partial class UpdateAssetTransfer
+    [Migration("20260127101827_LocationAssetNull")]
+    partial class LocationAssetNull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,7 +66,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LocationId")
+                    b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ManufacturerId")
@@ -241,7 +241,8 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FromLocationId")
+                    b.Property<int?>("FromLocationId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<Guid?>("FromUserId")
@@ -682,28 +683,28 @@ namespace AssetsManagementSystem.Migrations
                         new
                         {
                             Id = new Guid("fc05f613-0e97-444e-b19b-018a223a7484"),
-                            ConcurrencyStamp = "b2e725eb-a4b5-4a24-8921-4bbad1501b72",
+                            ConcurrencyStamp = "ac41dc3b-1164-4ef0-b316-bb6e742e3b36",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"),
-                            ConcurrencyStamp = "f3a52c84-2222-4a8f-aa32-1206e62d447e",
+                            ConcurrencyStamp = "6f2018ab-7399-4557-860a-70fe0b8c65d3",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"),
-                            ConcurrencyStamp = "90806a8f-f299-4a46-a649-8507884c3019",
+                            ConcurrencyStamp = "bfc9d2ad-091b-4edb-b871-b8d73d5c7e72",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         },
                         new
                         {
                             Id = new Guid("62474474-f91b-483d-b0d8-2742c01146f0"),
-                            ConcurrencyStamp = "c098e4f7-7d58-4117-a2b3-d72d11a0566c",
+                            ConcurrencyStamp = "bf9f96ed-f73b-4493-975e-924abb340f6a",
                             Name = "Auditor",
                             NormalizedName = "AUDITOR"
                         });
@@ -856,8 +857,8 @@ namespace AssetsManagementSystem.Migrations
                         {
                             Id = new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"),
                             AccessFailedCount = 0,
-                            AddedOnDate = new DateTime(2025, 11, 27, 1, 56, 23, 954, DateTimeKind.Local).AddTicks(6458),
-                            ConcurrencyStamp = "e6269cfc-6a72-4a6c-95ea-f655b3650ba0",
+                            AddedOnDate = new DateTime(2026, 1, 27, 12, 18, 26, 848, DateTimeKind.Local).AddTicks(2281),
+                            ConcurrencyStamp = "e6e5d4eb-97c7-4aab-84a2-9911a890e63f",
                             Email = "Mosaad_Ahmed@Gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Mosaad",
@@ -865,10 +866,10 @@ namespace AssetsManagementSystem.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MOSAAD_AHMED@GMAIL.COM",
                             NormalizedUserName = "MOSAAD_AHMED@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHuU8xOTUVVNEZM8VjCUL/nA17pq4sYmqQl5FpriPr9xuGw5dsgN/L/kZaF84LoM2A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMh05+k+KTyvXyIzx3tjT0IJN8+sPVPK4TlMmOC0JChb8BO0qAHsYkSTYw84qOMHqQ==",
                             PhoneNumber = "01551251116",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a78c9e2-05b0-47a4-863c-9d84f96f24ea",
+                            SecurityStamp = "73c4e56d-d6c8-4409-afc6-d9c816fe9422",
                             TwoFactorEnabled = false,
                             UserName = "Mosaad_Ahmed@Gmail.com",
                             UserStatus = "Active"
@@ -994,8 +995,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
                         .WithMany("Assets")
                         .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Manufacturer", "Manufacturer")
                         .WithMany("Assets")

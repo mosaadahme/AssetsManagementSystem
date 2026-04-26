@@ -1,3 +1,4 @@
+using AssetsManagementSystem.Services.Maintenance;
 using AssetsManagementSystem.Services.Report;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,9 @@ namespace AssetsManagementSystem
                   .AllowAnyOrigin()
           )
                            );
+
+            builder.Services.AddScoped<MaintenanceService> ( );
+
             builder.Services.AddDataProtection();
 
             builder.Services.AddOthersServices(builder.Configuration);

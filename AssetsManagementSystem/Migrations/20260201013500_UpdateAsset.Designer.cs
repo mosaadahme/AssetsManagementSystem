@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetsManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251126235624_UpdateAssetTransfer")]
-    partial class UpdateAssetTransfer
+    [Migration("20260201013500_UpdateAsset")]
+    partial class UpdateAsset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,7 +66,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LocationId")
+                    b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ManufacturerId")
@@ -84,10 +84,10 @@ namespace AssetsManagementSystem.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<DateOnly>("PurchaseDate")
+                    b.Property<DateOnly?>("PurchaseDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("PurchasePrice")
+                    b.Property<decimal?>("PurchasePrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
@@ -98,7 +98,6 @@ namespace AssetsManagementSystem.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -241,7 +240,8 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FromLocationId")
+                    b.Property<int?>("FromLocationId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<Guid?>("FromUserId")
@@ -682,28 +682,28 @@ namespace AssetsManagementSystem.Migrations
                         new
                         {
                             Id = new Guid("fc05f613-0e97-444e-b19b-018a223a7484"),
-                            ConcurrencyStamp = "b2e725eb-a4b5-4a24-8921-4bbad1501b72",
+                            ConcurrencyStamp = "c0b0ad83-ecdd-4e6b-b2b7-aceb56fdcb55",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"),
-                            ConcurrencyStamp = "f3a52c84-2222-4a8f-aa32-1206e62d447e",
+                            ConcurrencyStamp = "9b262d5d-1bd4-4a88-bb51-b7ab5e1229ed",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"),
-                            ConcurrencyStamp = "90806a8f-f299-4a46-a649-8507884c3019",
+                            ConcurrencyStamp = "661adb26-6acd-4045-a288-8f80d9550a5a",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         },
                         new
                         {
                             Id = new Guid("62474474-f91b-483d-b0d8-2742c01146f0"),
-                            ConcurrencyStamp = "c098e4f7-7d58-4117-a2b3-d72d11a0566c",
+                            ConcurrencyStamp = "45a82529-06e4-4c2f-84c9-652ca0ca2da3",
                             Name = "Auditor",
                             NormalizedName = "AUDITOR"
                         });
@@ -856,8 +856,8 @@ namespace AssetsManagementSystem.Migrations
                         {
                             Id = new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"),
                             AccessFailedCount = 0,
-                            AddedOnDate = new DateTime(2025, 11, 27, 1, 56, 23, 954, DateTimeKind.Local).AddTicks(6458),
-                            ConcurrencyStamp = "e6269cfc-6a72-4a6c-95ea-f655b3650ba0",
+                            AddedOnDate = new DateTime(2026, 2, 1, 3, 34, 59, 423, DateTimeKind.Local).AddTicks(7460),
+                            ConcurrencyStamp = "675ad6d9-7b04-431e-a5c5-8b8cd8ab0c32",
                             Email = "Mosaad_Ahmed@Gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Mosaad",
@@ -865,10 +865,10 @@ namespace AssetsManagementSystem.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MOSAAD_AHMED@GMAIL.COM",
                             NormalizedUserName = "MOSAAD_AHMED@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHuU8xOTUVVNEZM8VjCUL/nA17pq4sYmqQl5FpriPr9xuGw5dsgN/L/kZaF84LoM2A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOTdcDLy+rL4ziJObEPmVL7qH/BTkR02IZs+VLKvOlPGUVtLTfHpbbY6mVKuDWrE1A==",
                             PhoneNumber = "01551251116",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a78c9e2-05b0-47a4-863c-9d84f96f24ea",
+                            SecurityStamp = "86e87517-7ba2-41a7-93e1-a09e632605c0",
                             TwoFactorEnabled = false,
                             UserName = "Mosaad_Ahmed@Gmail.com",
                             UserStatus = "Active"
@@ -994,8 +994,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
                         .WithMany("Assets")
                         .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Manufacturer", "Manufacturer")
                         .WithMany("Assets")

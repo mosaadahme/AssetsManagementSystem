@@ -26,5 +26,7 @@
 
         [Required(ErrorMessage = "Role is required.")]
         public UserRole Role { get; set; }
+
+        public string PhoneNumber { get; set; }
     }
 }

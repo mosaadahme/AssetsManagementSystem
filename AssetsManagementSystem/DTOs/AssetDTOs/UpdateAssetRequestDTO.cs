@@ -9,9 +9,9 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [MaxLength ( 100, ErrorMessage = "Asset name cannot exceed 100 characters." )]
         public string Name { get; set; }
 
-        [Required ( ErrorMessage = "Model number is required." )]
+        //[Required ( ErrorMessage = "Model number is required." )]
         [MaxLength ( 50, ErrorMessage = "Model number cannot exceed 50 characters." )]
-        public string ModelNumber { get; set; }
+        public string? ModelNumber { get; set; }
 
         // السيريال هنا string واحد بس (لأننا بنعدل أصل معين)
         // ومسموح بـ Null للأصول الـ Non-IT
@@ -21,14 +21,14 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [MaxLength ( 1000, ErrorMessage = "Description cannot exceed 1000 characters." )]
         public string? Description { get; set; }
 
-        [Required ( ErrorMessage = "Purchase date is required." )]
+        //[Required ( ErrorMessage = "Purchase date is required." )]
         [DataType ( DataType.Date )]
         [PastOrPresentDate ( ErrorMessage = "Purchase date cannot be in the future." )]
-        public DateOnly PurchaseDate { get; set; }
+        public DateOnly ? PurchaseDate { get; set; }
 
-        [Required ( ErrorMessage = "Purchase price is required." )]
+        //[Required ( ErrorMessage = "Purchase price is required." )]
         [Range ( 0, double.MaxValue, ErrorMessage = "Purchase price must be a positive value." )]
-        public decimal PurchasePrice { get; set; }
+        public decimal? PurchasePrice { get; set; }
 
         [DataType ( DataType.Date )]
         [FutureDate ( "PurchaseDate", ErrorMessage = "Warranty expiry date must be after purchase date." )]
@@ -38,10 +38,10 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         public DateOnly? DepreciationDate { get; set; }
 
         [EnumDataType ( typeof ( AssetStatus ) )]
-        public AssetStatus Status { get; set; }
+        public AssetStatus? Status { get; set; }= AssetStatus.Available;
 
-        [Required ( ErrorMessage = "Location is required." )]
-        public int LocationId { get; set; }
+        //[Required ( ErrorMessage = "Location is required." )]
+        public int? LocationId { get; set; }
 
         //// Nullable: عشان لو عايز "تسحب" الأصل من الموظف وترجعه المخزن، تبعت null
         public Guid? AssignedUserId { get; set; }

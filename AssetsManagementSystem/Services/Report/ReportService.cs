@@ -156,7 +156,7 @@ namespace AssetsManagementSystem.Services.Report
             {
                 TotalAssets = allAssets.Count,
                 // Calculate value: Price * Quantity (important for bulk items)
-                TotalValue = allAssets.Sum ( a => a.PurchasePrice * a.Quantity ),
+                TotalValue = allAssets.Sum ( a => a.PurchasePrice??0 * a.Quantity ),
 
                 ActiveAssets = allAssets.Count ( a => a.Status == AssetStatus.InUse.ToString ( ) ), // Adjusted to Enum String
                 AvailableAssets = allAssets.Count ( a => a.Status == AssetStatus.Available.ToString ( ) ),
@@ -260,8 +260,8 @@ namespace AssetsManagementSystem.Services.Report
                 ModelNumber = a.ModelNumber,
                 SerialNumber = a.SerialNumber,
                 Description = a.Description, // Fixed typo
-                PurchaseDate = a.PurchaseDate,
-                PurchasePrice = a.PurchasePrice,
+                PurchaseDate = a.PurchaseDate??new DateOnly(),
+                PurchasePrice = a.PurchasePrice??0,
                 WarrantyExpiryDate = a.WarrantyExpiryDate,
                 DepreciationDate = a.DepreciationDate,
                 Status = a.Status,

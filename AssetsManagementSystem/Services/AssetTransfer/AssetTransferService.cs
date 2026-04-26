@@ -186,7 +186,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromLocationId = fromLocation.Id,
                 ToLocationId = toLocation.Id,
                 FromUserId = asset.AssignedUserId, // يظل الموظف كما هو (إن وجد)
-                ToUserId = asset.AssignedUserId ?? Guid.Empty,
+                ToUserId = asset.AssignedUserId  ,
                 Status = TransferStatus.Approved.ToString ( ), // يتم فوراً
                 AddedOnDate = DateTime.Now,
                 ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
@@ -324,7 +324,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 AssetName = tr.Asset?.Name ?? "Unknown",
                 AssetBarcode = tr.Asset?.Barcode,
 
-                FromUserId = tr.FromUserId ?? Guid.Empty,
+                FromUserId = tr.FromUserId?? Guid.Empty,
                 FromUserName = tr.FromUser != null ? $"{tr.FromUser.FirstName} {tr.FromUser.LastName}" : "Main Stock",
 
                 ToUserId = tr.ToUserId ?? Guid.Empty,
@@ -437,7 +437,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                             FromLocationId = sourceLocation.Id,
                             ToLocationId = destLocation.Id,
                             FromUserId = asset.AssignedUserId,
-                            ToUserId = asset.AssignedUserId ?? Guid.Empty,
+                            ToUserId = asset.AssignedUserId ,
                             Status = TransferStatus.Approved.ToString ( ),
                             AddedOnDate = DateTime.Now,
                             ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
@@ -628,10 +628,10 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                         var transferRecord = new AssetTransferRecords
                         {
                             AssetId = asset.Id,
-                            FromLocationId = oldLocationId ?? 0, // حل مشكلة الـ Nullable
+                            FromLocationId = oldLocationId, // حل مشكلة الـ Nullable
                             ToLocationId = targetLocation.Id,
                             FromUserId = asset.AssignedUserId,
-                            ToUserId = asset.AssignedUserId ?? Guid.Empty,
+                            ToUserId = asset.AssignedUserId ,
                             Status = "Moved",
                             AddedOnDate = DateTime.Now,
                             ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),

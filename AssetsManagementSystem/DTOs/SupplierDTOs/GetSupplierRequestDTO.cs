@@ -13,6 +13,6 @@
         public string Note { get; set; }
         public DateTime AddedOnDate { set; get; }
         public DateTime? UpdatedDate { set; get; }
-
+        public List<SupplierContactPersonDTO> ContactPersons { get; set; } = new List<SupplierContactPersonDTO> ( );
     }
 }

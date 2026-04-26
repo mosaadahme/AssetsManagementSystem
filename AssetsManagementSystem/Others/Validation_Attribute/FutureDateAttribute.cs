@@ -11,6 +11,7 @@
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
+            if (value == null) return ValidationResult.Success;
             var comparisonProperty = validationContext.ObjectType.GetProperty(_comparisonProperty);
             if (comparisonProperty == null)
             {

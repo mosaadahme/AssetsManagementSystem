@@ -8,8 +8,8 @@ namespace AssetsManagementSystem.Controllers
 {
     [Route ( "api/[controller]/[action]" )]
     [ApiController]
-    // تأكد إن الرولز دي متطابقة مع الموجود عندك في الداتابيز
-    [Authorize ( Roles = "Admin,Manager,Auditor" )]
+   
+    //[Authorize ( Roles = "Admin,Manager,Auditor" )]
     public class InventoryController : ControllerBase
     {
         private readonly InventoryService _inventoryService;
@@ -110,6 +110,24 @@ namespace AssetsManagementSystem.Controllers
             try
             {
                 var history = await _inventoryService.GetAuditHistoryAsync ( filter );
+                return Ok ( history );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "Error retrieving audit history." );
+                return StatusCode ( 500, new { error = "An internal error occurred." } );
+            }
+        }
+        #endregion
+
+        #region 3. Get Audit History (Search)
+
+        [HttpGet ( "Detailedhistory" )] 
+        public async Task<IActionResult> GetAuditDetails ( [FromQuery] int auditId )
+        {
+            try
+            {
+                var history = await _inventoryService.GetAuditDetailsAsync ( auditId );
                 return Ok ( history );
             }
             catch ( Exception ex )

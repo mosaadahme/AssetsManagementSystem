@@ -65,7 +65,7 @@ namespace AssetsManagementSystem.DTOs.AssetSearchDTOs
         public string Name { get; set; }
         public string Barcode { get; set; } // Added
         public string AssetType { get; set; } // IT, NonIT...
-        public string ModelNumber { get; set; }
+        public string? ModelNumber { get; set; }
         public string? SerialNumber { get; set; } // Nullable
         public string? Description { get; set; }
 

@@ -76,7 +76,6 @@ namespace AssetsManagementSystem.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ModelNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 

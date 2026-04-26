@@ -19,5 +19,6 @@ namespace AssetsManagementSystem.Models.DbSets
 
         public string Note { get; set; }
         public virtual ICollection<AssetsSuppliers> AssetsSuppliers { get; set; }
+        public virtual ICollection<SupplierContactPerson> ContactPersons { get; set; } = new HashSet<SupplierContactPerson> ( );
     }
 }

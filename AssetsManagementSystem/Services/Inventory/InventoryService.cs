@@ -308,6 +308,126 @@ namespace AssetsManagementSystem.Services.Inventory
         #endregion
 
 
+        #region 4. Get Audit Details By Id
+        public async Task<AuditReportResponseDTO> GetAuditDetailsAsync ( int auditId )
+        {
+            // 1. جلب بيانات الجلسة مع التفاصيل (AuditDetails) والمكان والمراجع
+            var audit = await UnitOfWork.readRepository<InventoryAudit> ( )
+                .GetAsync ( a => a.Id == auditId,
+                            include: src => src
+                                .Include ( a => a.Location )
+                                .Include ( a => a.Auditor )
+                                .Include ( a => a.AuditDetails ) ); // بنجيب التفاصيل عشان نطلع منها الـ Scanned Barcodes
+
+            if ( audit == null ) throw new KeyNotFoundException ( $"Audit session with ID {auditId} not found." );
+
+            // 2. تجميع الباركودات اللي الموظف عملها Scan وقت الجرد
+            var uniqueScannedBarcodes = audit.AuditDetails
+                .Select ( d => d.ScannedBarcode )
+                .Distinct ( StringComparer.OrdinalIgnoreCase )
+                .ToList ( );
+
+            // -------------------------------------------------------------
+            // إعادة بناء التحليل (Rebuild Analysis)
+            // -------------------------------------------------------------
+
+            // أ. إيه اللي المفروض يكون موجود في الغرفة دي؟ 
+            var expectedAssets = await UnitOfWork.readRepository<Asset> ( )
+                .GetAllAsync ( a => a.LocationId == audit.LocationId &&
+                                  ( a.IsDeleted == false || a.IsDeleted == null ) &&
+                                  a.Status != AssetStatus.Retired.ToString ( ),
+                             include: src => src.Include ( c => c.Category ),
+                             enableTracing: false );
+
+            var scannedSet = new HashSet<string> ( uniqueScannedBarcodes, StringComparer.OrdinalIgnoreCase );
+            var expectedSet = expectedAssets.ToDictionary ( a => a.Barcode, StringComparer.OrdinalIgnoreCase );
+
+            // --- 1. Matched Assets (سليم) ---
+            var matchedAssets = expectedAssets
+                .Where ( a => scannedSet.Contains ( a.Barcode ) )
+                .Select ( a => new AuditAssetSummaryDTO
+                {
+                    Barcode = a.Barcode,
+                    Name = a.Name,
+                    CategoryName = a.Category?.Name ?? "N/A",
+                    SerialNumber = a.SerialNumber
+                } ).ToList ( );
+
+            // --- 2. Missing Assets (عجز/مفقود) ---
+            var missingAssets = expectedAssets
+                .Where ( a => !scannedSet.Contains ( a.Barcode ) )
+                .Select ( a => new AuditAssetSummaryDTO
+                {
+                    Barcode = a.Barcode,
+                    Name = a.Name,
+                    CategoryName = a.Category?.Name ?? "N/A",
+                    SerialNumber = a.SerialNumber
+                } ).ToList ( );
+
+            // --- 3. Extras (زيادات) ---
+            var extraBarcodes = uniqueScannedBarcodes
+                .Where ( b => !expectedSet.ContainsKey ( b ) )
+                .ToList ( );
+
+            var displacedAssets = new List<DisplacedAssetInfoDTO> ( );
+            var unknownBarcodes = new List<string> ( );
+
+            if ( extraBarcodes.Any ( ) )
+            {
+                var foundExtras = await UnitOfWork.readRepository<Asset> ( )
+                    .GetAllAsync ( a => extraBarcodes.Contains ( a.Barcode ),
+                                 include: src => src.Include ( l => l.Location ).Include ( c => c.Category ),
+                                 enableTracing: false );
+
+                foreach ( var barcode in extraBarcodes )
+                {
+                    var asset = foundExtras.FirstOrDefault ( a => a.Barcode.Equals ( barcode, StringComparison.OrdinalIgnoreCase ) );
+
+                    if ( asset != null )
+                    {
+                        // أصل موجود بس في مكان تاني
+                        displacedAssets.Add ( new DisplacedAssetInfoDTO
+                        {
+                            Barcode = asset.Barcode,
+                            Name = asset.Name,
+                            CategoryName = asset.Category?.Name ?? "N/A",
+                            SerialNumber = asset.SerialNumber,
+                            OriginalLocationName = asset.Location?.Name ?? "Unknown"
+                        } );
+                    }
+                    else
+                    {
+                        // باركود مش موجود في السيستم أصلاً
+                        unknownBarcodes.Add ( barcode );
+                    }
+                }
+            }
+
+            // 3. إرجاع التقرير النهائي بنفس الـ DTO
+            return new AuditReportResponseDTO
+            {
+                AuditId = audit.Id,
+                Date = audit.StartDate,
+                LocationName = audit.Location?.Name ?? "Unknown",
+                AuditorName = audit.Auditor != null ? $"{audit.Auditor.FirstName} {audit.Auditor.LastName}" : "Unknown",
+                Status = audit.Status.ToString ( ),
+
+                // إحصائيات
+                TotalExpected = expectedAssets.Count,
+                TotalScanned = uniqueScannedBarcodes.Count,
+                MatchCount = matchedAssets.Count,
+                MissingCount = missingAssets.Count,
+                DisplacedCount = displacedAssets.Count,
+
+                // قوائم
+                MatchedAssets = matchedAssets,
+                MissingAssets = missingAssets,
+                DisplacedAssets = displacedAssets,
+                UnknownBarcodes = unknownBarcodes
+            };
+        }
+        #endregion
+
 
 
     }

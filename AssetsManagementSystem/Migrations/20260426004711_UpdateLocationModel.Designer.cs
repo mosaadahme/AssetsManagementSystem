@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetsManagementSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251126235624_UpdateAssetTransfer")]
-    partial class UpdateAssetTransfer
+    [Migration("20260426004711_UpdateLocationModel")]
+    partial class UpdateLocationModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,7 +66,7 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LocationId")
+                    b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ManufacturerId")
@@ -84,10 +84,10 @@ namespace AssetsManagementSystem.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<DateOnly>("PurchaseDate")
+                    b.Property<DateOnly?>("PurchaseDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("PurchasePrice")
+                    b.Property<decimal?>("PurchasePrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
@@ -98,7 +98,6 @@ namespace AssetsManagementSystem.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -241,7 +240,8 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FromLocationId")
+                    b.Property<int?>("FromLocationId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<Guid?>("FromUserId")
@@ -570,10 +570,16 @@ namespace AssetsManagementSystem.Migrations
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ParentLocationId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -582,6 +588,8 @@ namespace AssetsManagementSystem.Migrations
 
                     b.HasIndex("Barcode")
                         .IsUnique();
+
+                    b.HasIndex("ParentLocationId");
 
                     b.ToTable("Locations");
                 });
@@ -682,28 +690,28 @@ namespace AssetsManagementSystem.Migrations
                         new
                         {
                             Id = new Guid("fc05f613-0e97-444e-b19b-018a223a7484"),
-                            ConcurrencyStamp = "b2e725eb-a4b5-4a24-8921-4bbad1501b72",
+                            ConcurrencyStamp = "32b7b126-a5d5-44ad-b0ad-35de349fc7bb",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("846e3679-1537-487d-969c-3a6116fc3b2d"),
-                            ConcurrencyStamp = "f3a52c84-2222-4a8f-aa32-1206e62d447e",
+                            ConcurrencyStamp = "4f08ade6-6aee-4092-b957-44098a8af3fb",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
                             Id = new Guid("d9c0c478-adf7-40db-ade3-2b7810d9659f"),
-                            ConcurrencyStamp = "90806a8f-f299-4a46-a649-8507884c3019",
+                            ConcurrencyStamp = "aa9365aa-35be-41e4-bb57-74bf977477ad",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         },
                         new
                         {
                             Id = new Guid("62474474-f91b-483d-b0d8-2742c01146f0"),
-                            ConcurrencyStamp = "c098e4f7-7d58-4117-a2b3-d72d11a0566c",
+                            ConcurrencyStamp = "8440e498-9895-42b0-911b-25b8b95f2ca8",
                             Name = "Auditor",
                             NormalizedName = "AUDITOR"
                         });
@@ -754,6 +762,62 @@ namespace AssetsManagementSystem.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Suppliers");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.SupplierContactPerson", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedOnDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("SupplierContactPerson");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.User", b =>
@@ -856,8 +920,8 @@ namespace AssetsManagementSystem.Migrations
                         {
                             Id = new Guid("bdabcf06-a956-4ef7-8045-3214e68b9b4c"),
                             AccessFailedCount = 0,
-                            AddedOnDate = new DateTime(2025, 11, 27, 1, 56, 23, 954, DateTimeKind.Local).AddTicks(6458),
-                            ConcurrencyStamp = "e6269cfc-6a72-4a6c-95ea-f655b3650ba0",
+                            AddedOnDate = new DateTime(2026, 4, 26, 3, 47, 11, 244, DateTimeKind.Local).AddTicks(4483),
+                            ConcurrencyStamp = "241e40ea-b34a-4c3b-9ff1-9e94cc9d6c39",
                             Email = "Mosaad_Ahmed@Gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Mosaad",
@@ -865,10 +929,10 @@ namespace AssetsManagementSystem.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MOSAAD_AHMED@GMAIL.COM",
                             NormalizedUserName = "MOSAAD_AHMED@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHuU8xOTUVVNEZM8VjCUL/nA17pq4sYmqQl5FpriPr9xuGw5dsgN/L/kZaF84LoM2A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEL5meMeahyA1fiAwUqnl5EyjFV/U/Snnms0Y941cLAy+5m8nct7lGlLlAEBVTHlM4g==",
                             PhoneNumber = "01551251116",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a78c9e2-05b0-47a4-863c-9d84f96f24ea",
+                            SecurityStamp = "f23524b9-da8c-4171-9645-8b5700c1bd1b",
                             TwoFactorEnabled = false,
                             UserName = "Mosaad_Ahmed@Gmail.com",
                             UserStatus = "Active"
@@ -994,8 +1058,7 @@ namespace AssetsManagementSystem.Migrations
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "Location")
                         .WithMany("Assets")
                         .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Manufacturer", "Manufacturer")
                         .WithMany("Assets")
@@ -1195,6 +1258,16 @@ namespace AssetsManagementSystem.Migrations
                     b.Navigation("InventoryAudit");
                 });
 
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.Location", "ParentLocation")
+                        .WithMany("ChildLocations")
+                        .HasForeignKey("ParentLocationId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ParentLocation");
+                });
+
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.ReceiveMaintainedAsset", b =>
                 {
                     b.HasOne("AssetsManagementSystem.Models.DbSets.Asset", "Asset")
@@ -1235,6 +1308,17 @@ namespace AssetsManagementSystem.Migrations
                     b.Navigation("NewUserAssigned");
 
                     b.Navigation("UserRecieveDevFromSupplier");
+                });
+
+            modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.SupplierContactPerson", b =>
+                {
+                    b.HasOne("AssetsManagementSystem.Models.DbSets.Supplier", "Supplier")
+                        .WithMany("ContactPersons")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1314,6 +1398,8 @@ namespace AssetsManagementSystem.Migrations
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Location", b =>
                 {
                     b.Navigation("Assets");
+
+                    b.Navigation("ChildLocations");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Manufacturer", b =>
@@ -1324,6 +1410,8 @@ namespace AssetsManagementSystem.Migrations
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.Supplier", b =>
                 {
                     b.Navigation("AssetsSuppliers");
+
+                    b.Navigation("ContactPersons");
                 });
 
             modelBuilder.Entity("AssetsManagementSystem.Models.DbSets.User", b =>

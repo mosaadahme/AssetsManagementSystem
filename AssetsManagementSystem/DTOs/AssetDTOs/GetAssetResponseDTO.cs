@@ -11,7 +11,7 @@
         // 2. مهم عشان الـ Frontend يعرف يرسم الواجهة (يخفي السيريال لو مش IT)
         public string AssetType { get; set; }
 
-        public string ModelNumber { get; set; }
+        public string ? ModelNumber { get; set; }
 
         // بقى Nullable عشان الـ Non-IT
         public string? SerialNumber { get; set; }

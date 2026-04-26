@@ -13,5 +13,6 @@
         public string Address { get; set; }
 
         public string Note { get; set; }
+        public List<SupplierContactPersonDTO> ContactPersons { get; set; } = new List<SupplierContactPersonDTO> ( );
     }
  }

@@ -10,9 +10,9 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
 
 
 
-        [Required(ErrorMessage = "Model number is required.")]
+        //[Required(ErrorMessage = "Model number is required.")]
         [MaxLength(50, ErrorMessage = "Model number cannot exceed 50 characters.")]
-        public string ModelNumber { get; set; }
+        public string ?  ModelNumber { get; set; }
 
 
         [Required(ErrorMessage = "Purchase date is required.")]

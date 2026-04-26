@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AssetsManagementSystem.Controllers
 {
     [Route("api/[controller]/[action]")]
-    [ApiController]
+    //[ApiController]
     public class SupplierController : ControllerBase
     {
         private readonly SupplierService _supplierService;
@@ -70,7 +70,7 @@ namespace AssetsManagementSystem.Controllers
 
         #region GET: api/Supplier
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Auditor")]
+        //[Authorize(Roles = "Admin,Manager,Auditor")]
 
         public async Task<IActionResult> GetSuppliersByPagination(int currentPage, int pageSize)
         {

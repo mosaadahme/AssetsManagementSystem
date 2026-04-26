@@ -1,7 +1,12 @@
 ﻿using AssetsManagementSystem.DTOs.LocationDTOs;
 using AssetsManagementSystem.Services.Locations;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AssetsManagementSystem.Controllers
 {
@@ -20,11 +25,11 @@ namespace AssetsManagementSystem.Controllers
         }
 
         #region Add New Location
-        [HttpPost] // الروت هيكون: api/Location/AddLocation
+        // الروت هيكون: api/Location/AddLocation
+        [HttpPost]
         // [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> AddLocation ( [FromBody] AddLocationRequestDTO addLocationRequest )
         {
-            // ملحوظة: [ApiController] بيعمل Check لـ ModelState تلقائي، بس لو حابب تعمل Log سيبه
             if ( !ModelState.IsValid )
             {
                 _logger.LogWarning ( "Invalid model state for AddLocation request" );
@@ -36,13 +41,16 @@ namespace AssetsManagementSystem.Controllers
                 await _locationService.AddLocationAsync ( addLocationRequest );
                 _logger.LogInformation ( $"Location '{addLocationRequest.Name}' added successfully." );
 
-                // بنرجع 201 Created
                 return StatusCode ( StatusCodes.Status201Created, new { Message = "Location added successfully" } );
             }
             catch ( InvalidOperationException ex ) // تكرار الاسم أو الباركود
             {
                 _logger.LogWarning ( ex, "Duplicate location attempt." );
                 return Conflict ( new { Error = ex.Message } );
+            }
+            catch ( KeyNotFoundException ex ) // لو الـ Parent اللي مبعوت مش موجود
+            {
+                return NotFound ( new { Error = ex.Message } );
             }
             catch ( Exception ex )
             {
@@ -65,7 +73,6 @@ namespace AssetsManagementSystem.Controllers
 
             try
             {
-                // تم تعديل اسم الدالة لتطابق السيرفيس الجديدة
                 var location = await _locationService.GetLocationByBarcodeAsync ( barcode );
                 return Ok ( location );
             }
@@ -83,7 +90,8 @@ namespace AssetsManagementSystem.Controllers
         #endregion
 
         #region Get All Locations
-        [HttpGet] // الروت: api/Location/GetAllLocations
+        // الروت: api/Location/GetAllLocations
+        [HttpGet]
         public async Task<IActionResult> GetAllLocations ( )
         {
             try
@@ -100,7 +108,8 @@ namespace AssetsManagementSystem.Controllers
         #endregion
 
         #region Get Locations By Pagination
-        [HttpGet] // الروت: api/Location/GetLocationsByPagination?currentPage=1&pageSize=10
+        // الروت: api/Location/GetLocationsByPagination?currentPage=1&pageSize=10
+        [HttpGet]
         public async Task<IActionResult> GetLocationsByPagination ( [FromQuery] int currentPage = 1, [FromQuery] int pageSize = 10 )
         {
             try
@@ -166,7 +175,7 @@ namespace AssetsManagementSystem.Controllers
             {
                 return NotFound ( new { Error = ex.Message } );
             }
-            catch ( InvalidOperationException ex ) // لو المكان فيه Assets
+            catch ( InvalidOperationException ex ) // لو المكان فيه Assets أو جواه Child Locations
             {
                 return BadRequest ( new { Error = ex.Message } ); // 400 Bad Request
             }
@@ -174,6 +183,89 @@ namespace AssetsManagementSystem.Controllers
             {
                 _logger.LogError ( ex, "Error deleting location: {Barcode}", barcode );
                 return StatusCode ( 500, new { Error = "Internal error", Details = ex.Message } );
+            }
+        }
+        #endregion
+
+        // =========================================================================
+        // الدـــوال الـجـــديـــدة (New Hierarchy & Search Endpoints)
+        // =========================================================================
+
+        #region Get Location Levels (الليفيلز)
+        // الروت: api/Location/GetLevels
+        [HttpGet]
+        public IActionResult GetLevels ( )
+        {
+            try
+            {
+                var levels = _locationService.GetLocationLevels ( );
+                return Ok ( levels );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, "Error retrieving location levels." );
+                return StatusCode ( 500, new { Error = "Internal error", Details = ex.Message } );
+            }
+        }
+        #endregion
+
+        #region Get Locations By Parent (التتابع / Cascading)
+        // الروت: api/Location/GetLocationsByParent?parentId=1
+        [HttpGet]
+        public async Task<IActionResult> GetLocationsByParent ( [FromQuery] int? parentId )
+        {
+            try
+            {
+                var locations = await _locationService.GetLocationsByParentAsync ( parentId );
+                return Ok ( locations );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, $"Error retrieving locations by parent id: {parentId}" );
+                return BadRequest ( new { Error = ex.Message } );
+            }
+        }
+        #endregion
+
+        #region Get Location Breadcrumbs (المسار العكسي)
+        // الروت: api/Location/GetLocationBreadcrumbs/50
+        [HttpGet ( "{id}" )]
+        public async Task<IActionResult> GetLocationBreadcrumbs ( int id )
+        {
+            if ( id <= 0 ) return BadRequest ( new { Error = "Valid Location ID is required" } );
+
+            try
+            {
+                var breadcrumbs = await _locationService.GetLocationBreadcrumbsAsync ( id );
+                return Ok ( breadcrumbs );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, $"Error retrieving breadcrumbs for location id: {id}" );
+                return BadRequest ( new { Error = ex.Message } );
+            }
+        }
+        #endregion
+
+        #region Search Locations (البحث السريع)
+        // الروت: api/Location/SearchLocations?query=IT
+        [HttpGet]
+        public async Task<IActionResult> SearchLocations ( [FromQuery] string query )
+        {
+            if ( string.IsNullOrWhiteSpace ( query ) )
+            {
+                return BadRequest ( new { Error = "Search query cannot be empty" } );
+            }
+
+            try
+            {
+                var locations = await _locationService.SearchLocationsAsync ( query );
+                return Ok ( locations );
+            }
+            catch ( Exception ex )
+            {
+                _logger.LogError ( ex, $"Error searching locations with query: {query}" );
+                return BadRequest ( new { Error = ex.Message } );
             }
         }
         #endregion

@@ -321,7 +321,7 @@ namespace AssetsManagementSystem.Migrations
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Barcode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     AssetType = table.Column<int>(type: "int", nullable: false),
-                    ModelNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ModelNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     SerialNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     PurchaseDate = table.Column<DateOnly>(type: "date", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),

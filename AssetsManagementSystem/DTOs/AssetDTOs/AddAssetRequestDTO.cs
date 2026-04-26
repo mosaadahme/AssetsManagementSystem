@@ -9,9 +9,9 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [MaxLength ( 100, ErrorMessage = "Asset name cannot exceed 100 characters." )]
         public string Name { get; set; }
 
-        [Required ( ErrorMessage = "Model number is required." )]
+        //[Required ( ErrorMessage = "Model number is required." )]
         [MaxLength ( 50, ErrorMessage = "Model number cannot exceed 50 characters." )]
-        public string ModelNumber { get; set; }
+        public string ?ModelNumber { get; set; }
 
         [Required ( ErrorMessage = "Asset Type is required." )]
         public AssetType AssetType { get; set; }
@@ -23,14 +23,14 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [MaxLength ( 1000, ErrorMessage = "Description cannot exceed 1000 characters." )]
         public string? Description { get; set; }
 
-        [Required ( ErrorMessage = "Purchase date is required." )]
+        //[Required ( ErrorMessage = "Purchase date is required." )]
         [DataType ( DataType.Date )]
         [PastOrPresentDate ( ErrorMessage = "Purchase date cannot be in the future." )]
-        public DateOnly PurchaseDate { get; set; } // تم تعديل رسالة الخطأ 😄
+        public DateOnly? PurchaseDate { get; set; }  
 
-        [Required ( ErrorMessage = "Purchase price is required." )]
+        //[Required ( ErrorMessage = "Purchase price is required." )]
         [Range ( 0, double.MaxValue, ErrorMessage = "Purchase price must be a positive value." )]
-        public decimal PurchasePrice { get; set; }
+        public decimal? PurchasePrice { get; set; }
 
         // 4. التواريخ بقت Nullable
         [DataType ( DataType.Date )]
@@ -44,8 +44,8 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         [EnumDataType ( typeof ( AssetStatus ) )]
         public AssetStatus Status { get; set; } = AssetStatus.Available;  
          
-        [Required ( ErrorMessage = "Location is required." )]
-        public int LocationId { get; set; }
+        //[Required ( ErrorMessage = "Location is required." )]
+        public int? LocationId { get; set; }
 
         // 5. بقت Nullable عشان المخزن
         public Guid? AssignedUserId { get; set; }
@@ -64,5 +64,10 @@ namespace AssetsManagementSystem.DTOs.AssetDTOs
         // 6. الحد الأدنى اختياري
         [Range ( 0, int.MaxValue )]
         public int? MinQuantityLimit { get; set; }
+
+        public bool IsBarcodeProvided { get; set; } = false;
+
+        // دي الليست اللي هتشيل الباركودات لو الفلاج بـ true
+        public List<string>? ProvidedBarcodes { get; set; }
     }
 }
