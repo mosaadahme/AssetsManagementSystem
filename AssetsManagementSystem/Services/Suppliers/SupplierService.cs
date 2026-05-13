@@ -90,7 +90,7 @@ namespace AssetsManagementSystem.Services.Suppliers
                 UpdatedDate = supplier.UpdatedDate,
 
                 // مابينج جهات الاتصال بخطوة واحدة مع حماية من الـ Null
-                ContactPersons = supplier.ContactPersons?.Select ( c => new SupplierContactPersonDTO
+                ContactPersons = supplier.ContactPersons?.Where(c => c.IsDeleted != true)?.Select ( c => new SupplierContactPersonDTO
                 {
                     Id = c.Id,
                     Name = c.Name,
@@ -134,7 +134,7 @@ namespace AssetsManagementSystem.Services.Suppliers
                 UpdatedDate = supplier.UpdatedDate,
 
                 // مابينج جهات الاتصال لكل مورد في القائمة
-                ContactPersons = supplier.ContactPersons?.Select ( c => new SupplierContactPersonDTO
+                ContactPersons = supplier.ContactPersons?.Where(c => c.IsDeleted != true)?.Select ( c => new SupplierContactPersonDTO
                 {
                     Id = c.Id,
                     Name = c.Name,
