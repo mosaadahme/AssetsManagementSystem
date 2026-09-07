@@ -41,7 +41,7 @@ namespace AssetsManagementSystem.Services.AssetTransfer
                 FromUserId = null, // جاي من المخزن
                 ToUserId = toUserId,
                 FromLocationId = asset.LocationId,
-                ToLocationId = asset.LocationId??0, // المكان ثابت (أو ممكن يتغير لو الموظف في مكان تاني)
+                ToLocationId = asset.LocationId, // المكان ثابت (أو ممكن يتغير لو الموظف في مكان تاني)
                 Status = TransferStatus.Approved.ToString ( ), // موافقة فورية
                 ApprovalDate = DateOnly.FromDateTime ( DateTime.Now ),
                 AddedOnDate = DateTime.Now,

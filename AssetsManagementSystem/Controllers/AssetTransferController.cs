@@ -56,7 +56,7 @@ namespace AssetsManagementSystem.Controllers
         /// صرف أصل من المخزن لموظف (Admin/Manager Only)
         /// </summary>
         [HttpPost]
-        [Authorize ( Roles = "Admin,Manager" )]
+        //[Authorize ( Roles = "Admin,Manager" )]
         public async Task<IActionResult> AssignToUser ( string barcode, Guid toUserId )
         {
             try
